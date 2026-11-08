@@ -1,6 +1,7 @@
 import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING, OWN_GOALS, FINDS } from './data.js';
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
   weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, cur, replaceAll, resetAll } from './store.js';
+import { startAmbient } from './ambient.js';
 import { g, mood, weekMoonLabel, evaluateVisit, cardName, cardImg, cardQs, drawCard, canAskCard, nextCardDay,
   detectThreads, threadFact, chapterDue, rangeStats, callWitch } from './engine.js';
 
@@ -59,7 +60,9 @@ function render(top = false) {
   window.scrollTo(0, top ? 0 : y);
   if (ui.focus) { const el = document.getElementById(ui.focus); if (el) el.focus(); ui.focus = null; }
   if (route === 'map') animateStitches();
+  requestAnimationFrame(() => startAmbient($app));
 }
+window.addEventListener('resize', () => startAmbient($app));
 // Игла проходит по эмблеме: новые стежки проявляются на гобелене
 function animateStitches() {
   const els = [...document.querySelectorAll('[data-anim-to]')];
@@ -419,7 +422,7 @@ SCR.map = () => {
     </div>
   </header>
   ${!firstDay ? `<div style="padding:0 16px">${hint('map')}</div>` : ''}
-  <div class="mapwrap">
+  <div class="mapwrap" data-amb="stitches" data-ambkey="map" data-ambo='{"spots":[[0.303,0.270,0.09],[0.705,0.273,0.09],[0.297,0.737,0.09],[0.697,0.800,0.09]]}'>
     <img class="tap" src="img/tapestry.webp" alt="Вышитая карта: золотой город в центре, к нему ведут тропы от земель">
     ${slots}
     ${!firstDay && (chap || pending) ? `<div class="mapbanners">
@@ -492,7 +495,7 @@ SCR.land = () => {
   const tint = def?.tint || '#24170F';
   return `
 <div class="scr violet" style="background:${tint}">
-  ${sceneSrc(l) ? `<img class="hero-img" src="${sceneSrc(l)}" alt="" style="height:min(340px,40vh);object-position:center 35%">` : `<div style="height:200px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 60%,#5A3A26,${tint})">${emblemHtml(l, 120)}</div>`}
+  ${sceneSrc(l) ? `<div style="position:relative" data-amb="motes" data-ambkey="land-${l.id}" data-ambo='{"c":"#FFE9A8","n":14,"top":0.2}'><img class="hero-img" src="${sceneSrc(l)}" alt="" style="height:min(50vh,440px);object-position:center 35%"></div>` : `<div style="height:200px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 60%,#5A3A26,${tint})">${emblemHtml(l, 120)}</div>`}
   <button class="back" data-a="go" data-to="map" aria-label="Назад к карте" style="position:absolute;left:16px;top:calc(16px + var(--safe-t));background:${tint};border-color:#4E3D73;color:#EFE7F7">${I.back}</button>
   <div class="sheetup" style="background:${tint};padding:18px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:14px">
     <div class="row" style="justify-content:space-between;align-items:flex-end">
@@ -559,7 +562,7 @@ SCR.morning = () => {
   const pats = activeLands().flatMap((l) => l.patterns.map((p) => ({ ...p, land: l })));
   return `
 <div class="scr tabbed dawn">
-  <div style="position:relative"><img class="hero-img" src="img/scene/morning_${S.hero}.webp" alt="Рассвет на поляне: ${w('странница', 'странник')} сворачивает спальник у палатки" style="height:200px;object-position:center 72%">
+  <div style="position:relative" data-amb="motes" data-ambkey="dawn" data-ambo='{"c":"#FFF1C4","n":16}'><img class="hero-img" src="img/scene/morning_${S.hero}.webp" alt="Рассвет на поляне: ${w('странница', 'странник')} сворачивает спальник у палатки" style="height:min(40vh,320px);object-position:center 72%">
     <div role="group" aria-label="Время дня" style="position:absolute;right:12px;top:calc(12px + var(--safe-t));display:flex;padding:3px;border-radius:999px;background:#3B2418">
       <span aria-current="page" style="height:34px;padding:0 14px;border-radius:999px;background:#F6C98B;color:#3B2418;display:flex;align-items:center;font-size:14px">Утро</span>
       <button data-a="go" data-to="evening" style="height:34px;padding:0 14px;border-radius:999px;color:#F3EBDD;background:none;border:none;font-size:14px">Вечер</button></div></div>
@@ -596,7 +599,7 @@ SCR.evening = () => {
   const prevLands = prev ? (prev.landIds || (prev.landId ? [prev.landId] : [])).map((id) => landOf(id)).filter(Boolean) : [];
   return `
 <div class="scr tabbed night">
-  <div style="position:relative"><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="${w('Странница', 'Странник')} отдыхает босиком у костра с кружкой чая" style="height:220px;object-position:center 74%">
+  <div style="position:relative" data-amb="embers" data-ambkey="fire" data-ambo='${S.hero === 'm' ? '{"ix":0.74,"iy":0.735,"py":0.74}' : '{"ix":0.26,"iy":0.75,"py":0.74}'}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="${w('Странница', 'Странник')} отдыхает босиком у костра с кружкой чая" style="height:min(42vh,340px);object-position:center 74%">
     <div role="group" aria-label="Время дня" style="position:absolute;right:12px;top:calc(12px + var(--safe-t));display:flex;padding:3px;border-radius:999px;background:#0E1226;border:1px solid #3A4270">
       <button data-a="go" data-to="morning" style="height:34px;padding:0 14px;border-radius:999px;color:#F1E9D8;background:none;border:none;font-size:14px">Утро</button>
       <span aria-current="page" style="height:34px;padding:0 14px;border-radius:999px;background:var(--gold);color:var(--night);display:flex;align-items:center;font-size:14px">Вечер</span></div></div>
@@ -637,7 +640,7 @@ function eveningDone() {
   const pending = S.witch.pending;
   return `
 <div class="scr tabbed night">
-  <img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="" style="height:260px;object-position:center 74%">
+  <div style="position:relative" data-amb="embers" data-ambkey="fire2" data-ambo='${S.hero === 'm' ? '{"ix":0.74,"iy":0.735,"py":0.74}' : '{"ix":0.26,"iy":0.75,"py":0.74}'}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="" style="height:min(46vh,360px);object-position:center 74%"></div>
   <div class="pad nt" style="text-align:center;align-items:center;justify-content:center">
     <span class="goth" style="font-size:30px;color:var(--moon)">${n ? `+${stitchW(n)}` : 'Привал вплетён'}</span>
     <p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">${n ? 'Нить легла в гобелен. Отдыхай — огонь присмотрит за дорогой.' : 'Даже день без шагов — часть пути. Отдыхай.'}</p>
@@ -656,7 +659,7 @@ SCR.visit = () => {
   if (ui.done) {
     return `
 <div class="scr night">
-  <img class="hero-img" src="img/scene/witch_${S.hero}.webp" alt="" style="height:min(470px,52vh);object-position:center 58%">
+  <div style="position:relative" data-amb="motes" data-ambkey="witch" data-ambo='{"c":"#F3D7FF","n":14}'><img class="hero-img" src="img/scene/witch_${S.hero}.webp" alt="" style="height:min(470px,52vh);object-position:center 58%"></div>
   <div class="sheetup" style="background:var(--night);border-top:1px solid var(--gold);padding:22px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:14px">
     <p class="box" style="margin:0;font-size:15px;line-height:1.4">${ui.done === 'carry' ? 'Вопрос лёг в твою котомку. Он подождёт тебя у вечернего костра.' : 'Ответ сохранён в Летописи.'}</p>
     ${ui.cardNext ? `<p style="margin:0;font-size:16px;font-style:italic;color:var(--lav)">«Подожди, не уходи. У меня с собой колода».</p><button class="btn gold" data-a="go" data-to="card" data-src="visit">Вытянуть карту</button>` : `<button class="btn gold" data-a="go" data-to="map">Вернуться к гобелену</button>`}
@@ -666,7 +669,7 @@ SCR.visit = () => {
   const echo = v.echo;
   return `
 <div class="scr night">
-  <img class="hero-img" src="img/scene/witch_${S.hero}.webp" alt="Седая Странствующая с посохом-веретеном стоит у костра напротив ${w('путницы', 'путника')}" style="height:min(380px,34vh);object-position:center 58%">
+  <div style="position:relative" data-amb="motes" data-ambkey="witch" data-ambo='{"c":"#F3D7FF","n":14}'><img class="hero-img" src="img/scene/witch_${S.hero}.webp" alt="Седая Странствующая с посохом-веретеном стоит у костра напротив ${w('путницы', 'путника')}" style="height:min(440px,42vh);object-position:center 58%"></div>
   <div class="sheetup" style="background:var(--night);border-top:1px solid var(--gold);padding:22px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:14px">
     <span class="goth" style="font-size:18px;color:var(--gold)">Странствующая у огня</span>
     <p style="margin:0;font-size:17px;font-style:italic;color:var(--lav)">${esc(v.line)}</p>
@@ -731,7 +734,7 @@ SCR.treasury = () => {
   const recent = T.spends.slice(-6).reverse();
   return `
 <div class="scr tabbed tre">
-  <img class="hero-img" src="img/scene/treasury.webp" alt="Пещера-сокровищница: сундуки с самоцветами, свечи" style="height:190px;object-position:center 66%">
+  <div style="position:relative" data-amb="coins" data-ambkey="coins" data-ambo='{"y0":0.35,"y1":0.85}'><img class="hero-img" src="img/scene/treasury.webp" alt="Пещера-сокровищница: сундуки с самоцветами, свечи" style="height:min(36vh,300px);object-position:center 66%"></div>
   <div class="sheetup" style="background:var(--tre);padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px">
     <div class="row" style="justify-content:space-between"><h1 style="line-height:1">Сокровищница</h1>
       <span class="row" style="gap:8px"><button class="link" style="padding:4px 0;font-size:14px" data-a="hideSums">${hide ? 'Показать суммы' : 'Скрыть суммы'}</button>${helpBtn('treasury')}</span></div>
