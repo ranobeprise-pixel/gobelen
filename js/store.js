@@ -29,6 +29,7 @@ export function blank() {
     treasury: { mode: 0, hideSums: false, chests: [], wallet: null, spends: [], regular: [], envelopes: [], currency: '₽' },
     seen: {},
     seenStitches: {},
+    finds: [],
     spells: [],
     witch: { lastVisit: null, pending: null, lastCard: null, history: [], echoed: [] },
     threads: { decided: {}, list: [] },
@@ -46,6 +47,7 @@ function migrate(o) {
   o.settings = Object.assign(blank().settings, o.settings);
   o.seen = o.seen || {};
   o.seenStitches = o.seenStitches || {};
+  o.finds = o.finds || [];
   o.settings.witchFreq = o.settings.witchFreq || 'auto';
   // v2: в частоты добавлены «1×/мес» и «2×/мес» — сдвигаем старые индексы
   if ((o.v || 1) < 2) {

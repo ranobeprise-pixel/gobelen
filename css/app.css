@@ -176,3 +176,8 @@ label.col{font-size:15px;color:var(--muted)}
 .toastundo{background:var(--gold);color:var(--night);border:none;border-radius:8px;padding:6px 12px;font-size:14px;font-weight:700;flex:0 0 auto}
 .slot .pill{max-width:140%;overflow:hidden;text-overflow:ellipsis}
 .bagbtn{min-height:44px;justify-content:center}
+.findcard{position:fixed;left:50%;top:calc(18px + var(--safe-t));transform:translateX(-50%);z-index:70;display:flex;gap:12px;align-items:center;max-width:min(92%,400px);padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#F7EBCB,#EFD9A0);color:#3B2418;border:1px solid #C9A24A;box-shadow:0 10px 26px rgba(0,0,0,.35);animation:finddrop 4.2s ease-out forwards}
+.findspark{font-size:28px;color:#B8862E;animation:findspin 1.2s ease-out}
+@keyframes finddrop{0%{opacity:0;transform:translate(-50%,-20px)}10%{opacity:1;transform:translate(-50%,0)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-10px)}}
+@keyframes findspin{0%{transform:scale(.3) rotate(-90deg);opacity:0}100%{transform:scale(1) rotate(0)}}
+@media (prefers-reduced-motion:reduce){.findcard,.findspark{animation:none}}
