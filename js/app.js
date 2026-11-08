@@ -281,7 +281,7 @@ SCR.weave = () => {
   </div>
   ${hints.length ? `<div class="col" style="gap:6px"><span class="step">Подсказки — нажми, чтобы добавить</span>
     <div class="row" style="flex-wrap:wrap;gap:6px">${hints.slice(0, 6).map((h) => `<button class="chip add" data-a="patAdd" data-name="${esc(h)}">+ ${esc(h)}</button>`).join('')}</div></div>` : ''}
-  <div class="row"><input id="ownPat" class="field grow" data-m="ui.newPat" value="${esc(ui.newPat || '')}" placeholder="Свой узор, например: дневник практики" style="height:44px"><button class="btn" style="width:auto;min-height:44px" data-a="patAddOwn">Вшить</button></div>
+  <div class="row"><input id="ownPat" class="field grow" data-m="ui.newPat" value="${esc(ui.newPat || '')}" placeholder="Свой узор, например: час на проект" style="height:44px"><button class="btn" style="width:auto;min-height:44px" data-a="patAddOwn">Вшить</button></div>
   <div class="col mt-auto">
     ${pats.length ? `<div role="status" class="note ${heavy ? 'warn' : 'ok'}">В неделю эта земля берёт ${threadW(total)}${heavy ? '. Тяжеловато — оставь себе запас сил.' : '. По силам.'}</div>` : '<div class="note ok">Можно начать и без узоров: шаги к этой земле можно отмечать у вечернего костра.</div>'}
     <button class="btn" data-a="weaveNext">${nextLabel}</button>
@@ -453,7 +453,7 @@ SCR.land = () => {
     ${hint('land')}
     ${goalCard(l)}
     <div class="col" style="gap:4px"><div class="prog" role="img" aria-label="Вышито ${pct} процентов" style="background:rgba(255,255,255,.08)"><div style="width:${pct}%"></div></div>
-    <span style="font-size:13px;color:#B9AECB">Вовлечённость: ${stitchW(l.stitches)} из ${l.target} — столько нужно, чтобы вышить эмблему</span></div>
+    <span style="font-size:13px;color:#B9AECB">Вовлечённость: ${stitchW(l.stitches)} из ${l.target} — примерно 6 недель по твоему плану узоров</span></div>
     ${p >= 1 ? `<button class="btn moon" data-a="go" data-to="complete" data-id="${l.id}">Земля вышита — что дальше?</button>` : ''}
     <div class="row" style="justify-content:space-between;align-items:baseline"><span style="font-size:16px;color:var(--moon)">Узоры — дела этой земли</span>
       <button class="link" style="color:#D9D0E8;padding:6px 0" data-a="weaveEdit" data-id="${l.id}">Изменить узоры</button></div>
@@ -553,10 +553,10 @@ SCR.evening = () => {
     ${carried ? `<div class="box col"><span class="lbl">Вопрос из котомки</span><span style="font-size:16px;line-height:1.35">${esc(carried.q)}</span>
       <textarea class="field" rows="2" data-m="ui.carriedAns" placeholder="Можно пару слов — или оставить">${esc(ui.carriedAns || '')}</textarea></div>` : ''}
     ${needBackup ? `<button class="box row" data-a="go" data-to="backup" style="text-align:left;color:inherit"><span class="grow" style="font-size:15px">Воскресенье. Сохранишь копию летописи?</span>${I.chev}</button>` : ''}
-    <div class="col" style="gap:6px"><span class="lbl">Сколько в тебе сил <span style="font-size:13px;color:var(--nmuted)">· чем полнее луна, тем больше</span></span>
+    <div class="col" style="gap:6px"><span class="lbl">Сколько в тебе сил</span>
       <div class="row" style="justify-content:space-between">${[2, 5, 8, 11, 13].map((r, i) => `<button data-a="set" data-k="energy" data-v="${i}" aria-label="${energyName(i)}" aria-pressed="${ui.energy === i}" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;background:${ui.energy === i ? '#232C55' : 'transparent'};border:2px solid ${ui.energy === i ? 'var(--pink)' : 'transparent'}"><svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#C9B26A" stroke-width="1.5"/><circle cx="15" cy="15" r="${r}" fill="#E9C77B"/></svg></button>`).join('')}</div>
       <span class="small center" style="color:var(--nmuted)">${energyName(ui.energy)}</span></div>
-    <div class="col" style="gap:6px"><span class="lbl">Небо над тобой <span style="font-size:13px;color:var(--nmuted)">· твоё настроение, не погода</span></span>
+    <div class="col" style="gap:6px"><span class="lbl">Небо над тобой <span style="font-size:13px;color:var(--nmuted)">· твоё настроение</span></span>
       <div class="seg" style="grid-template-columns:repeat(5,minmax(0,1fr))">${SKIES.map((s, i) => `<button class="chip ${ui.sky === i ? 'on' : ''}" style="padding:4px 2px;border-radius:14px;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1" data-a="set" data-k="sky" data-v="${i}" aria-pressed="${ui.sky === i}">${s}<span style="font-size:11px;opacity:.8">${SKY_HINT[i]}</span></button>`).join('')}</div></div>
     <div class="col"><span class="lbl">Шаг дня — к какой земле?</span>
       <div style="display:grid;grid-template-columns:repeat(${Math.min(5, lands.length + 1)},minmax(0,1fr));gap:6px">
@@ -671,7 +671,10 @@ SCR.treasury = () => {
   <div class="sheetup" style="background:var(--tre);padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px">
     <div class="row" style="justify-content:space-between"><h1 style="line-height:1">Сокровищница</h1>
       <span class="row" style="gap:8px"><button class="link" style="padding:4px 0;font-size:14px" data-a="hideSums">${hide ? 'Показать суммы' : 'Скрыть суммы'}</button>${helpBtn('treasury')}</span></div>
+    <p class="sub" style="margin-top:-6px">Накопления, траты и кошель</p>
     ${hint('treasury')}
+    <button data-a="toggle" data-k="chestHelp" aria-expanded="${!!ui.chestHelp}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#E8C27A;text-align:left;min-height:32px"><span style="font-size:16px">Сундуки</span><span style="font-size:13px;color:#C9B49A">${ui.chestHelp ? 'скрыть' : 'что это?'} ${ui.chestHelp ? '▴' : '▾'}</span></button>
+    ${ui.chestHelp ? `<p style="margin:0;font-size:14px;line-height:1.4;color:#D8C7AC">Сундук — это накопление на цель. «Положить» — отложить деньги сюда${T.wallet !== null ? ' (они уйдут из кошеля)' : ''}. «Взять» — достать обратно, например чтобы потратить на эту цель.</p>` : ''}
     <div class="col">
       ${T.chests.length ? T.chests.map((c) => {
         const goal = Number(c.goal) || 0;
@@ -680,7 +683,7 @@ SCR.treasury = () => {
         return `<button data-a="chestOpen" data-id="${c.id}" style="display:flex;flex-direction:column;gap:3px;background:none;border:none;padding:0;text-align:left;color:inherit">
           <span class="row" style="justify-content:space-between;width:100%;font-size:15px"><span>${esc(c.name)}</span><span style="color:#E8C27A">${val}</span></span>
           <span class="prog" role="img" aria-label="${esc(c.name)}" style="display:block;width:100%"><span style="display:block;height:100%;width:${pct ?? (c.saved ? 100 : 0)}%;background:repeating-linear-gradient(90deg,#E8B04A 0 6px,#C98E2E 6px 8px)"></span></span></button>
-          ${ui.chest === c.id ? `<span style="font-size:13px;line-height:1.35;color:#D8C7AC">Сундук — это накопление на цель, а не ежемесячный конверт. «Положить» — отложить деньги сюда${T.wallet !== null ? ' (они уйдут из кошеля)' : ''}. «Взять» — достать обратно, например чтобы потратить на эту цель.</span><div class="row"><input class="field grow" style="height:44px" inputmode="numeric" data-m="ui.chestAmt" placeholder="₽" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div>` : ''}`;
+          ${ui.chest === c.id ? `<div class="row"><input class="field grow" style="height:44px" inputmode="numeric" data-m="ui.chestAmt" placeholder="₽" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div>` : ''}`;
       }).join('') : '<p class="sub">Сундуков пока нет. Их можно завести в Котомке.</p>'}
     </div>
     ${T.wallet !== null ? `<div class="row ${ui.flash === 'wallet' ? 'flash' : ''}" style="justify-content:space-between;font-size:15px;padding:6px 8px;margin:0 -8px;border-radius:8px"><span>В кошеле${ui.flash === 'wallet' ? ' · запомнила' : ''}</span><span style="color:#E8C27A">${hide ? '•••' : money(T.wallet)}</span></div>` : ''}
@@ -828,7 +831,7 @@ SCR.journal = () => {
   ${canAskCard() ? `<button class="box row" data-a="go" data-to="card" data-src="ask" style="text-align:left;color:inherit"><img src="img/card/back.webp" alt="" style="width:34px;height:55px;border-radius:4px"><span class="grow col" style="gap:0"><span style="font-size:16px;font-weight:700">Вытянуть карту</span><span class="small">одна карта в неделю</span></span>${I.chev}</button>`
     : `<span class="small" style="color:var(--muted)">Следующую карту можно вытянуть с ${fmtDay(nextCardDay())}</span>`}
   ${S.witch.pending ? `<button class="box row" data-a="go" data-to="visit" style="text-align:left;color:inherit"><div class="ava" role="img" aria-label=""></div><span class="grow" style="font-size:16px">Странствующая ждёт тебя у костра</span>${I.chev}</button>`
-    : S.witch.lastVisit === today() ? '' : `<button class="box row" data-a="callWitch" style="text-align:left;color:inherit"><div class="ava" role="img" aria-label=""></div><span class="grow col" style="gap:0"><span style="font-size:16px;font-weight:700">Позвать Странствующую</span><span class="small">она задаст один вопрос</span></span>${I.chev}</button>`}
+    : S.settings.witchFreq !== 'call' || S.witch.lastVisit === today() ? '' : `<button class="box row" data-a="callWitch" style="text-align:left;color:inherit"><div class="ava" role="img" aria-label=""></div><span class="grow col" style="gap:0"><span style="font-size:16px;font-weight:700">Позвать Странствующую</span><span class="small">она задаст один вопрос</span></span>${I.chev}</button>`}
   ${wall.length ? `<div class="col" style="gap:6px"><span class="lbl">Стена Летописи</span><div class="row" style="flex-wrap:wrap;gap:12px">${wall.map((x) => `<span class="col" style="align-items:center;gap:2px;font-size:12px;width:72px;text-align:center">${emblemHtml(x, 56, 'box-shadow:0 0 0 3px #E9C77B')}${esc(x.customName || landDef(x.id)?.short || '')}</span>`).join('')}</div></div>` : ''}
   <div role="group" aria-label="Что показывать" class="row" style="flex-wrap:wrap;gap:6px">${filters.map((f, i) => `<button class="chip ${ui.filter === i ? 'on' : ''}" style="min-height:36px" data-a="set" data-k="filter" data-v="${i}" aria-pressed="${ui.filter === i}">${f}</button>`).join('')}</div>
   ${ui.writing ? `<div class="box col"><textarea id="noteTa" class="field" rows="4" data-m="ui.noteText" placeholder="Что хочется оставить в летописи?">${esc(ui.noteText || '')}</textarea>
@@ -911,7 +914,7 @@ SCR.chapter = () => {
 SCR.settings = () => {
   const rows = [
     ['Путеводитель', 'Как всё устроено: земли, привалы, сокровищница, заклинания', 'guide'],
-    ['Странствующая', { auto: 'Приходит сама, когда почувствует', rare: 'Приходит редко', call: 'Приходит, только когда позовёшь' }[S.settings.witchFreq || 'auto'], 'witchset'],
+    ['Странствующая', { auto: 'Приходит, когда это нужно', rare: 'Приходит редко', call: 'Приходит, только когда позовёшь' }[S.settings.witchFreq || 'auto'], 'witchset'],
     ['Напоминания', 'Утренние сборы и привал в Календаре', 'reminders'],
     ['Герой и имя', `${S.hero === 'm' ? 'Странник' : 'Странница'}${S.name ? ' · ' + esc(S.name) : ''}`, 'heroEdit'],
     ['Мои земли', 'Сменить, усыпить, добавить свою', 'landsEdit'],
@@ -933,7 +936,7 @@ SCR.settings = () => {
 };
 
 SCR.witchset = () => {
-  const opts = [['auto', 'Как сама решит', 'Приходит, когда замечает перемены: спад, подъём, паузу, заросшую тропу. Не чаще раза в 5 дней.'],
+  const opts = [['auto', 'Как сама решит', 'Приходит, когда это нужно.'],
     ['rare', 'Редко', 'Не чаще раза в две недели и только с важным.'],
     ['call', 'Только когда позову', 'Сама не приходит. Позвать её можно в Летописи. Если тебе долго тяжело, она всё равно напомнит о близких и о помощи.']];
   const cur = S.settings.witchFreq || 'auto';
