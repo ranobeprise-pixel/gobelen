@@ -99,18 +99,96 @@ const KINDS = {
   }
 };
 
+// Дым над костром: мягкие клубы колышутся и тают
+KINDS.smoke = function (L) {
+  const st = L.st;
+  const [fx, fy] = mapPoint(L.box, L.o.ix, L.o.iy, L.o.py);
+  if (Math.random() < 0.12) st.p.push({ x: fx + rnd(-4, 4), y: fy - 14, vy: rnd(-0.45, -0.28), life: 0, max: rnd(220, 320), ph: rnd(0, 6), s: rnd(2, 3) });
+  for (const p of st.p) { p.life++; p.ph += 0.025; p.y += p.vy; p.x += Math.sin(p.ph) * 0.35 + (L.o.drift || -0.08); p.s += 0.012; }
+  st.p = st.p.filter((p) => p.life < p.max);
+  const out = [];
+  for (const p of st.p) {
+    const a = Math.sin((p.life / p.max) * Math.PI) * 0.22;
+    const r = Math.round(p.s);
+    for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) if (dx * dx + dy * dy <= r * r) out.push([p.x + dx * PX, p.y + dy * PX, '#D9D2E6', a, 1]);
+  }
+  return out;
+};
+// Светлячки: бродят по поляне и мигают
+KINDS.fireflies = function (L) {
+  const st = L.st, { w, h } = L.box;
+  const n = L.o.n || 10;
+  while (st.p.length < n) st.p.push({ x: rnd(0, w), y: rnd(h * 0.15, h * 0.9), a: rnd(0, 6), sp: rnd(0.25, 0.5), ph: rnd(0, 6), bl: rnd(0.02, 0.05) });
+  const out = [];
+  for (const p of st.p) {
+    p.a += rnd(-0.12, 0.12); p.x += Math.cos(p.a) * p.sp; p.y += Math.sin(p.a) * p.sp * 0.6; p.ph += p.bl;
+    if (p.x < 0 || p.x > w) p.a = Math.PI - p.a;
+    if (p.y < h * 0.1 || p.y > h * 0.95) p.a = -p.a;
+    const lit = Math.max(0, Math.sin(p.ph));
+    out.push([p.x, p.y, '#E8FF9A', lit, 2]);
+    if (lit > 0.4) out.push([p.x - PX, p.y, '#B6E35A', lit * 0.5, 1], [p.x + PX * 2, p.y, '#B6E35A', lit * 0.5, 1], [p.x, p.y - PX, '#B6E35A', lit * 0.5, 1], [p.x, p.y + PX * 2, '#B6E35A', lit * 0.5, 1]);
+  }
+  return out;
+};
+// Акварельное свечение: от фонарей и свечей мягко расходится свет
+KINDS.glow = {
+  soft: true,
+  draw(L, ctx) {
+    const st = L.st;
+    st.t = (st.t || 0) + 1;
+    const lights = L.o.lights || [];
+    st.rip ||= [];
+    if (Math.random() < 0.025 && lights.length) { const i = Math.floor(Math.random() * lights.length); st.rip.push({ i, life: 0, max: rnd(150, 220) }); }
+    ctx.globalCompositeOperation = 'lighter';
+    lights.forEach(([ix, iy, size], i) => {
+      const [x, y] = mapPoint(L.box, ix, iy, L.o.py);
+      const r0 = (size || 1) * L.box.w * 0.045;
+      const breathe = 0.5 + 0.5 * Math.sin(st.t * 0.02 + i * 1.7);
+      const r = r0 * (1.3 + 0.25 * breathe);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `rgba(255,214,140,${0.22 + 0.16 * breathe})`);
+      g.addColorStop(0.45, `rgba(255,190,110,${0.1 + 0.07 * breathe})`);
+      g.addColorStop(1, 'rgba(255,170,90,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    });
+    for (const rp of st.rip) {
+      rp.life++;
+      const [ix, iy, size] = lights[rp.i] || [0, 0, 1];
+      const [x, y] = mapPoint(L.box, ix, iy, L.o.py);
+      const k = rp.life / rp.max;
+      const R = (size || 1) * L.box.w * (0.05 + 0.16 * k);
+      const a = 0.2 * Math.sin(k * Math.PI);
+      const g = ctx.createRadialGradient(x, y, R * 0.55, x, y, R);
+      g.addColorStop(0, 'rgba(255,220,160,0)');
+      g.addColorStop(0.7, `rgba(255,214,150,${a})`);
+      g.addColorStop(1, 'rgba(255,200,130,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+    }
+    st.rip = st.rip.filter((rp) => rp.life < rp.max);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+};
+
 function frame() {
   for (const L of layers) {
-    const pts = KINDS[L.kind](L);
     const ctx = L.ctx;
+    const K = KINDS[L.kind];
+    if (K.soft) {
+      ctx.setTransform(L.dpr, 0, 0, L.dpr, 0, 0);
+      ctx.clearRect(0, 0, L.box.w, L.box.h);
+      K.draw(L, ctx);
+      continue;
+    }
+    const pts = K(L);
     ctx.clearRect(0, 0, L.cw, L.ch);
-    for (const [x, y, c, a, s] of pts) {
+    for (const [x, y, c, a, sz0] of pts) {
       if (a <= 0) continue;
       ctx.globalAlpha = Math.min(1, a);
       ctx.fillStyle = c;
-      const sz = Math.max(1, Math.round(s));
+      const sz = Math.max(1, Math.round(sz0));
       ctx.fillRect(Math.round(x / PX), Math.round(y / PX), sz, sz);
     }
+    ctx.globalAlpha = 1;
   }
   raf = layers.length ? requestAnimationFrame(frame) : null;
 }
@@ -124,17 +202,24 @@ export function startAmbient(root = document) {
   root.querySelectorAll('[data-amb]').forEach((host) => {
     const r = host.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    let cv = host.querySelector('canvas.amb');
-    if (!cv) { cv = document.createElement('canvas'); cv.className = 'amb'; cv.setAttribute('aria-hidden', 'true'); host.appendChild(cv); }
-    const cw = Math.ceil(r.width / PX), ch = Math.ceil(r.height / PX);
-    cv.width = cw; cv.height = ch;
-    const kind = host.dataset.amb;
-    const o = JSON.parse(host.dataset.ambo || '{}');
-    const key = host.dataset.ambkey || kind;
-    const st = store[key] ||= { p: [] };
-    if (st.w && (st.w !== r.width || st.h !== r.height)) st.p = [];
-    st.w = r.width; st.h = r.height;
-    layers.push({ kind, o, st, ctx: cv.getContext('2d'), cw, ch, box: { w: r.width, h: r.height } });
+    const all = JSON.parse(host.dataset.ambo || '{}');
+    const baseKey = host.dataset.ambkey || host.dataset.amb;
+    for (const kind of host.dataset.amb.split(' ')) {
+      if (!KINDS[kind]) continue;
+      const soft = !!KINDS[kind].soft;
+      let cv = host.querySelector(`canvas.amb[data-k="${kind}"]`);
+      if (!cv) { cv = document.createElement('canvas'); cv.className = 'amb' + (soft ? ' soft' : ''); cv.dataset.k = kind; cv.setAttribute('aria-hidden', 'true'); host.appendChild(cv); }
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const cw = soft ? Math.ceil(r.width * dpr) : Math.ceil(r.width / PX);
+      const ch = soft ? Math.ceil(r.height * dpr) : Math.ceil(r.height / PX);
+      cv.width = cw; cv.height = ch;
+      const o = Object.assign({}, all, all[kind] || {});
+      const key = baseKey + ':' + kind;
+      const st = store[key] ||= { p: [] };
+      if (st.w && (st.w !== r.width || st.h !== r.height)) { st.p = []; st.rip = []; }
+      st.w = r.width; st.h = r.height;
+      layers.push({ kind, o, st, ctx: cv.getContext('2d'), cw, ch, dpr, box: { w: r.width, h: r.height } });
+    }
   });
   if (layers.length) raf = requestAnimationFrame(frame);
 }

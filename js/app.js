@@ -438,6 +438,12 @@ SCR.map = () => {
 </div>`;
 };
 
+const fireO = () => (S.hero === 'm' ? '{"ix":0.74,"iy":0.735,"py":0.74,"smoke":{"drift":-0.05}}' : '{"ix":0.26,"iy":0.75,"py":0.74,"smoke":{"drift":-0.12}}');
+// Театр нарисован акварелью: вместо пиксельных пылинок — мягкий свет от фонарей и свечей
+const THEATER_LIGHTS = [[0.745, 0.405, 1.3], [0.24, 0.52, 1.6], [0.835, 0.435, 1.1], [0.42, 0.69, 1], [0.80, 0.60, 0.9], [0.146, 0.32, 0.45], [0.215, 0.293, 0.45], [0.37, 0.282, 0.45], [0.507, 0.259, 0.45], [0.606, 0.276, 0.45], [0.638, 0.289, 0.45], [0.784, 0.317, 0.45], [0.877, 0.32, 0.45]];
+const sceneAmb = (l) => (lookOf(l)?.id === 'theater'
+  ? `data-amb="glow" data-ambkey="land-${l.id}" data-ambo='${JSON.stringify({ py: 0.35, lights: THEATER_LIGHTS })}'`
+  : `data-amb="motes" data-ambkey="land-${l.id}" data-ambo='{"c":"#FFE9A8","n":14,"top":0.2}'`);
 // ——— Земля ———
 const HORIZONS = [['месяц', 1], ['3 месяца', 3], ['полгода', 6], ['год', 12]];
 function goalCard(l) {
@@ -496,7 +502,7 @@ SCR.land = () => {
   const tint = def?.tint || '#24170F';
   return `
 <div class="scr violet" style="background:${tint}">
-  ${sceneSrc(l) ? `<div style="position:relative" data-amb="motes" data-ambkey="land-${l.id}" data-ambo='{"c":"#FFE9A8","n":14,"top":0.2}'><img class="hero-img" src="${sceneSrc(l)}" alt="" style="height:min(50vh,440px);object-position:center 35%"></div>` : `<div style="height:200px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 60%,#5A3A26,${tint})">${emblemHtml(l, 120)}</div>`}
+  ${sceneSrc(l) ? `<div style="position:relative" ${sceneAmb(l)}><img class="hero-img" src="${sceneSrc(l)}" alt="" style="height:min(50vh,440px);object-position:center 35%"></div>` : `<div style="height:200px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 60%,#5A3A26,${tint})">${emblemHtml(l, 120)}</div>`}
   <button class="back" data-a="go" data-to="map" aria-label="Назад к карте" style="position:absolute;left:16px;top:calc(16px + var(--safe-t));background:${tint};border-color:#4E3D73;color:#EFE7F7">${I.back}</button>
   <div class="sheetup" style="background:${tint};padding:18px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:14px">
     <div class="row" style="justify-content:space-between;align-items:flex-end">
@@ -600,7 +606,7 @@ SCR.evening = () => {
   const prevLands = prev ? (prev.landIds || (prev.landId ? [prev.landId] : [])).map((id) => landOf(id)).filter(Boolean) : [];
   return `
 <div class="scr tabbed night">
-  <div style="position:relative" data-amb="embers" data-ambkey="fire" data-ambo='${S.hero === 'm' ? '{"ix":0.74,"iy":0.735,"py":0.74}' : '{"ix":0.26,"iy":0.75,"py":0.74}'}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="${w('Странница', 'Странник')} отдыхает босиком у костра с кружкой чая" style="height:min(42vh,340px);object-position:center 74%">
+  <div style="position:relative" data-amb="smoke embers fireflies" data-ambkey="fire" data-ambo='${fireO()}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="${w('Странница', 'Странник')} отдыхает босиком у костра с кружкой чая" style="height:min(42vh,340px);object-position:center 74%">
     <div role="group" aria-label="Время дня" style="position:absolute;right:12px;top:calc(12px + var(--safe-t));display:flex;padding:3px;border-radius:999px;background:#0E1226;border:1px solid #3A4270">
       <button data-a="go" data-to="morning" style="height:34px;padding:0 14px;border-radius:999px;color:#F1E9D8;background:none;border:none;font-size:14px">Утро</button>
       <span aria-current="page" style="height:34px;padding:0 14px;border-radius:999px;background:var(--gold);color:var(--night);display:flex;align-items:center;font-size:14px">Вечер</span></div></div>
@@ -641,7 +647,7 @@ function eveningDone() {
   const pending = S.witch.pending;
   return `
 <div class="scr tabbed night">
-  <div style="position:relative" data-amb="embers" data-ambkey="fire2" data-ambo='${S.hero === 'm' ? '{"ix":0.74,"iy":0.735,"py":0.74}' : '{"ix":0.26,"iy":0.75,"py":0.74}'}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="" style="height:min(46vh,360px);object-position:center 74%"></div>
+  <div style="position:relative" data-amb="smoke embers fireflies" data-ambkey="fire2" data-ambo='${fireO()}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="" style="height:min(46vh,360px);object-position:center 74%"></div>
   <div class="pad nt" style="text-align:center;align-items:center;justify-content:center">
     <span class="goth" style="font-size:30px;color:var(--moon)">${n ? `+${stitchW(n)}` : 'Привал вплетён'}</span>
     <p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">${n ? 'Нить легла в гобелен. Отдыхай — огонь присмотрит за дорогой.' : 'Даже день без шагов — часть пути. Отдыхай.'}</p>
