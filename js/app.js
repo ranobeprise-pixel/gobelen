@@ -556,7 +556,7 @@ SCR.evening = () => {
     <div class="col" style="gap:6px"><span class="lbl">Сколько в тебе сил</span>
       <div class="row" style="justify-content:space-between">${[2, 5, 8, 11, 13].map((r, i) => `<button data-a="set" data-k="energy" data-v="${i}" aria-label="${energyName(i)}" aria-pressed="${ui.energy === i}" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;background:${ui.energy === i ? '#232C55' : 'transparent'};border:2px solid ${ui.energy === i ? 'var(--pink)' : 'transparent'}"><svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#C9B26A" stroke-width="1.5"/><circle cx="15" cy="15" r="${r}" fill="#E9C77B"/></svg></button>`).join('')}</div>
       <span class="small center" style="color:var(--nmuted)">${energyName(ui.energy)}</span></div>
-    <div class="col" style="gap:6px"><span class="lbl">Небо над тобой <span style="font-size:13px;color:var(--nmuted)">· твоё настроение</span></span>
+    <div class="col" style="gap:6px"><span class="lbl">Небо над тобой</span>
       <div class="seg" style="grid-template-columns:repeat(5,minmax(0,1fr))">${SKIES.map((s, i) => `<button class="chip ${ui.sky === i ? 'on' : ''}" style="padding:4px 2px;border-radius:14px;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1" data-a="set" data-k="sky" data-v="${i}" aria-pressed="${ui.sky === i}">${s}<span style="font-size:11px;opacity:.8">${SKY_HINT[i]}</span></button>`).join('')}</div></div>
     <div class="col"><span class="lbl">Шаг дня — к какой земле?</span>
       <div style="display:grid;grid-template-columns:repeat(${Math.min(5, lands.length + 1)},minmax(0,1fr));gap:6px">
