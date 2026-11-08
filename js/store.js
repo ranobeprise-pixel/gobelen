@@ -26,7 +26,8 @@ export function blank() {
     days: {},
     steps: [],
     journal: [],
-    treasury: { mode: 0, hideSums: false, chests: [], wallet: null, spends: [] },
+    treasury: { mode: 0, hideSums: false, chests: [], wallet: null, spends: [], regular: [] },
+    seen: {},
     spells: [],
     witch: { lastVisit: null, pending: null, lastCard: null, history: [], echoed: [] },
     threads: { decided: {}, list: [] },
@@ -37,10 +38,23 @@ export function blank() {
 
 export let S = load();
 
+function migrate(o) {
+  const b = blank();
+  o = Object.assign(b, o);
+  o.treasury = Object.assign(blank().treasury, o.treasury);
+  o.settings = Object.assign(blank().settings, o.settings);
+  o.seen = o.seen || {};
+  // заклинания: строка → { what, amount, unit }
+  for (const sp of o.spells || []) {
+    for (const k of ['small', 'great']) if (typeof sp[k] === 'string') sp[k] = { what: sp[k], amount: '', unit: '' };
+  }
+  return o;
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return Object.assign(blank(), JSON.parse(raw));
+    if (raw) return migrate(JSON.parse(raw));
   } catch (e) { /* пусто */ }
   return blank();
 }
@@ -50,7 +64,7 @@ export function save() {
 }
 
 export function replaceAll(obj) {
-  S = Object.assign(blank(), obj);
+  S = migrate(obj);
   save();
 }
 
@@ -61,8 +75,10 @@ export const landDef = (id) => LANDS.find((l) => l.id === id);
 export function landOf(id) { return S.lands.find((l) => l.id === id); }
 export function landName(l) { return l.customName || landDef(l.id)?.name || 'Своя земля'; }
 export function landShort(l) { return l.customName || landDef(l.id)?.short || 'Своя земля'; }
-export function emblemSrc(l) { return landDef(l.id) ? `img/emblem/${l.id}.webp` : null; }
-export function sceneSrc(l) { return landDef(l.id) ? `img/scene/${l.id}.webp` : null; }
+// Своя земля может взять облик одной из готовых земель (l.art)
+export function lookOf(l) { return landDef(l.id) || (l.art ? landDef(l.art) : null); }
+export function emblemSrc(l) { const d = lookOf(l); return d ? `img/emblem/${d.id}.webp` : null; }
+export function sceneSrc(l) { const d = lookOf(l); return d ? `img/scene/${d.id}.webp` : null; }
 
 export function weeklyLoad(patterns) {
   return patterns.reduce((s, p) => s + p.load * FREQS[p.freq][1], 0);
@@ -70,7 +86,7 @@ export function weeklyLoad(patterns) {
 export function tierTarget(patterns) {
   return Math.max(24, Math.round(weeklyLoad(patterns) * 6));
 }
-export function activeLands() { return S.lands.filter((l) => l.status !== 'hung'); }
+export function activeLands() { return S.lands.filter((l) => l.status === 'active'); }
 
 export function addStep(landId, pattern, date = dayKey()) {
   const l = landOf(landId);
@@ -91,4 +107,33 @@ export function spellStats(sp) {
 }
 
 // ——— сокровищница ———
+// Постоянные траты (аренда, связь, подписки) сами записываются как «Провизия» в свой день месяца.
+export function applyRegular() {
+  const T = S.treasury;
+  const t = dayKey();
+  const now = parseDay(t);
+  let added = 0;
+  for (const r of T.regular || []) {
+    const start = r.last ? parseDay(r.last) : parseDay(r.since);
+    // идём по месяцам от последней записи до сегодня
+    let y = start.getFullYear(), m = start.getMonth();
+    if (r.last) m += 1;
+    for (let guard = 0; guard < 24; guard++) {
+      const dim = new Date(y, m + 1, 0).getDate();
+      const due = new Date(y, m, Math.min(r.day, dim));
+      if (due > now) break;
+      const k = dayKey(due);
+      if (!r.last || k > r.last) {
+        if (k >= r.since) {
+          T.spends.push({ id: uid(), date: k, amount: r.amount, note: r.name, tag: 1, regular: r.id });
+          if (T.wallet !== null) T.wallet -= r.amount;
+          added++;
+        }
+        r.last = k;
+      }
+      m += 1; if (m > 11) { m = 0; y += 1; }
+    }
+  }
+  return added;
+}
 export const money = (n) => Math.round(n).toLocaleString('ru-RU') + ' ₽';

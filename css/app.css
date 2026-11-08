@@ -155,3 +155,13 @@ label.col{font-size:15px;color:var(--muted)}
 .dayh{margin:0;font-size:15px;font-weight:700;color:var(--rust);display:flex;align-items:center;gap:8px}
 .dayh::after{content:'';flex:1;height:1px;background:#CBB99B}
 .fab{position:fixed;right:max(20px,calc(50% - 200px));bottom:calc(var(--tab) + 16px);height:52px;padding:0 20px;border-radius:999px;border:none;background:var(--rust);color:#FFF8EC;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;z-index:15;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.hintbox{padding:14px 16px;border-radius:14px;background:#F7EBCB;border:1px solid #C9A24A;color:#3B2418;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.4}
+.hintbox p{margin:0}
+.helpbtn{width:30px;height:30px;flex:0 0 30px;border-radius:50%;border:1px solid currentColor;background:transparent;font-size:16px;font-weight:700;opacity:.75;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.bagbtn{display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;padding:0;color:#CDBFA8;font-size:11px;min-width:44px}
+@keyframes flashok{0%{background:#3E6B2E;box-shadow:0 0 0 2px #8FCB6B}100%{background:transparent;box-shadow:none}}
+.flash{animation:flashok 2.2s ease-out}
+.artpick{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.artpick button{padding:0;border:none;background:none;border-radius:50%}
+.artpick img{width:100%;aspect-ratio:1;border-radius:50%;display:block;box-sizing:border-box;border:3px solid transparent}
+.artpick button[aria-pressed="true"] img{border-color:#9A4A2A}

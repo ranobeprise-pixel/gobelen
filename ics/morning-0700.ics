@@ -1,0 +1,22 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Gobelen puti//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:gobelen-morning-0700@ranobeprise-pixel.github.io
+DTSTAMP:20261108T000000Z
+DTSTART:20261109T070000
+DURATION:PT10M
+RRULE:FREQ=DAILY
+SUMMARY:Утренние сборы
+DESCRIPTION:Три касания — и в путь. Открыть гобелен: https://ranobeprise-pixel.github.io/gobelen/
+URL:https://ranobeprise-pixel.github.io/gobelen/
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Утренние сборы
+TRIGGER:PT0M
+END:VALARM
+END:VEVENT
+END:VCALENDAR
