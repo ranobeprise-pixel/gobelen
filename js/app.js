@@ -598,7 +598,7 @@ SCR.visit = () => {
 <div class="scr night">
   <img class="hero-img" src="img/scene/witch_${S.hero}.webp" alt="" style="height:min(470px,52vh);object-position:center 58%">
   <div class="sheetup" style="background:var(--night);border-top:1px solid var(--gold);padding:22px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:14px">
-    <p class="box" style="margin:0;font-size:15px;line-height:1.4">${ui.done === 'carry' ? 'Вопрос лёг в твою котомку. Он подождёт тебя у вечернего костра.' : 'Ответ сохранён в Летописи. Через несколько недель Странствующая может напомнить тебе эти слова.'}</p>
+    <p class="box" style="margin:0;font-size:15px;line-height:1.4">${ui.done === 'carry' ? 'Вопрос лёг в твою котомку. Он подождёт тебя у вечернего костра.' : 'Ответ сохранён в Летописи.'}</p>
     ${ui.cardNext ? `<p style="margin:0;font-size:16px;font-style:italic;color:var(--lav)">«Подожди, не уходи. У меня с собой колода».</p><button class="btn gold" data-a="go" data-to="card" data-src="visit">Вытянуть карту</button>` : `<button class="btn gold" data-a="go" data-to="map">Вернуться к гобелену</button>`}
   </div>
 </div>`;
