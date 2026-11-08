@@ -22,7 +22,13 @@
 <noscript>Для гобелена нужен JavaScript.</noscript>
 <script type="module" src="js/app.js?v=1"></script>
 <script>
-  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  // Обновления приходят сами: новая версия скачивается в фоне и включается без потери записей.
+  if ('serviceWorker' in navigator) {
+    const had = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (had) location.reload(); });
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').then((r) => r.update()).catch(() => {}));
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {}); });
+  }
 </script>
 </body>
 </html>
