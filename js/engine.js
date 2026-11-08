@@ -157,14 +157,14 @@ export function detectThreads() {
         key,
         fact: `В ${a} из ${withL.length} вечеров после шагов к земле «${landName(l)}» ты отмечала небо «Ясно» или «Звёзды». В остальные вечера — в ${b} из ${without.length}.`,
         factM: `В ${a} из ${withL.length} вечеров после шагов к земле «${landName(l)}» ты отмечал небо «Ясно» или «Звёзды». В остальные вечера — в ${b} из ${without.length}.`,
-        dates: withL.slice(0, 5).map((e) => e.date),
+        dates: withL.filter(good).slice(0, 5).map((e) => e.date),
         landId: l.id
       });
     } else if (ra <= 0.25 && rb >= 0.6) {
       found.push({
         key,
         fact: `В ${withL.length - a} из ${withL.length} вечеров после шагов к земле «${landName(l)}» небо у тебя было «Туман», «Дождь» или «Облака». В остальные вечера — в ${without.length - b} из ${without.length}.`,
-        dates: withL.slice(0, 5).map((e) => e.date),
+        dates: withL.filter((e) => !good(e)).slice(0, 5).map((e) => e.date),
         landId: l.id
       });
     }
@@ -178,7 +178,7 @@ export function detectThreads() {
     if (withS.length >= 3 && without.length >= 3) {
       const a = withS.filter((e) => e.energy <= 1).length, b = without.filter((e) => e.energy <= 1).length;
       if (a / withS.length >= 0.66 && b / without.length <= 0.3) {
-        found.push({ key, fact: `В ${a} из ${withS.length} дней, когда монеты рассыпались по дороге, вечером сил было мало. В остальные дни — в ${b} из ${without.length}.`, dates: withS.slice(0, 5).map((e) => e.date) });
+        found.push({ key, fact: `В ${a} из ${withS.length} дней, когда монеты рассыпались по дороге, вечером сил было мало. В остальные дни — в ${b} из ${without.length}.`, dates: withS.filter((e) => e.energy <= 1).slice(0, 5).map((e) => e.date) });
       }
     }
   }
@@ -191,7 +191,7 @@ export function detectThreads() {
     if (withC.length < 4 || without.length < 3) continue;
     const a = withC.filter((e) => e.energy >= 3).length, b = without.filter((e) => e.energy >= 3).length;
     if (a / withC.length >= 0.7 && b / without.length <= 0.35) {
-      found.push({ key: k, fact: `В ${a} из ${withC.length} дней с заклинанием «${sp.name}» вечером сил было «Хорошо» или больше. В остальные дни — в ${b} из ${without.length}.`, dates: withC.slice(0, 5).map((e) => e.date) });
+      found.push({ key: k, fact: `В ${a} из ${withC.length} дней с заклинанием «${sp.name}» вечером сил было «Хорошо» или больше. В остальные дни — в ${b} из ${without.length}.`, dates: withC.filter((e) => e.energy >= 3).slice(0, 5).map((e) => e.date) });
     }
   }
   return found;

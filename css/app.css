@@ -169,3 +169,10 @@ label.col{font-size:15px;color:var(--muted)}
 .gain{position:absolute;left:50%;top:-6%;transform:translateX(-50%);white-space:nowrap;background:#E9C77B;color:#1F1611;font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;animation:gainup 2.6s ease-out forwards;pointer-events:none;z-index:4}
 @keyframes gainup{0%{opacity:0;transform:translate(-50%,10px)}15%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-14px)}}
 @media (prefers-reduced-motion:reduce){.gain{animation:none}}
+.link{min-height:44px;display:inline-flex;align-items:center}
+.helpbtn{position:relative}
+.helpbtn::after{content:'';position:absolute;inset:-8px}
+.toast{display:flex;align-items:center;gap:12px}
+.toastundo{background:var(--gold);color:var(--night);border:none;border-radius:8px;padding:6px 12px;font-size:14px;font-weight:700;flex:0 0 auto}
+.slot .pill{max-width:140%;overflow:hidden;text-overflow:ellipsis}
+.bagbtn{min-height:44px;justify-content:center}

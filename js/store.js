@@ -14,7 +14,7 @@ export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function blank() {
   return {
-    v: 2,
+    v: 3,
     created: dayKey(),
     lastActive: null,
     hero: 'f',
@@ -51,6 +51,11 @@ function migrate(o) {
   if ((o.v || 1) < 2) {
     for (const l of o.lands || []) for (const p of l.patterns || []) if (p.freq >= 1) p.freq += 2;
     o.v = 2;
+  }
+  // v3: потолок вышивки — 60 стежков
+  if (o.v < 3) {
+    for (const l of o.lands || []) if (l.target > 60) l.target = Math.max(60, Math.min(l.target, (l.stitches || 0) + 1));
+    o.v = 3;
   }
   // заклинания: строка → { what, amount, unit }
   for (const sp of o.spells || []) {
@@ -92,7 +97,8 @@ export function weeklyLoad(patterns) {
   return patterns.reduce((s, p) => s + p.load * FREQS[p.freq][1], 0);
 }
 export function tierTarget(patterns) {
-  return Math.max(24, Math.round(weeklyLoad(patterns) * 6));
+  // ~6 недель по плану, но не меньше 24 и не больше 60, чтобы первые шаги было видно
+  return Math.min(60, Math.max(24, Math.round(weeklyLoad(patterns) * 6)));
 }
 export function activeLands() { return S.lands.filter((l) => l.status === 'active'); }
 
