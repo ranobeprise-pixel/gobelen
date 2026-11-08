@@ -2,6 +2,7 @@ import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
   weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, cur, replaceAll, resetAll } from './store.js';
 import { startAmbient } from './ambient.js';
+import { BUILD } from './version.js';
 import { g, mood, weekMoonLabel, evaluateVisit, cardName, cardImg, cardQs, drawCard, canAskCard, nextCardDay,
   detectThreads, threadFact, chapterDue, rangeStats, callWitch } from './engine.js';
 
@@ -1024,6 +1025,7 @@ SCR.settings = () => {
     <span class="col grow" style="gap:1px"><span style="font-size:17px;font-weight:700">${r[0]}</span><span style="font-size:14px;color:var(--muted)">${r[1]}</span></span>${I.chev}</button>`).join('')}</div>
   <button data-a="go" data-to="safety" class="row mt-auto" style="min-height:58px;padding:8px 14px;border-radius:12px;background:var(--night2);color:#F1E9D8;border:none;text-align:left">${I.heart}
     <span class="col grow" style="gap:0"><span style="font-size:17px;font-weight:700">Если тяжело</span><span style="font-size:14px;color:#C9C3D6">Близкие люди и помощь, всегда под рукой</span></span></button>
+  <p class="small center" style="margin:0;color:var(--muted)">Версия ${BUILD}</p>
   <p class="small center" style="margin:0;color:var(--muted)">Шрифты: Gatchina — Dimitri Antonov / Blue Curve Designstudio (CC BY 4.0), Brahms Gotisch — Sasha Pavljenko.</p>
 </div></div>`;
 };
