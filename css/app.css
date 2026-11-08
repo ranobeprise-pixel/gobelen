@@ -165,3 +165,7 @@ label.col{font-size:15px;color:var(--muted)}
 .artpick button{padding:0;border:none;background:none;border-radius:50%}
 .artpick img{width:100%;aspect-ratio:1;border-radius:50%;display:block;box-sizing:border-box;border:3px solid transparent}
 .artpick button[aria-pressed="true"] img{border-color:#9A4A2A}
+.slot.glow img:last-of-type,.slot.glow .ownland:last-of-type{filter:drop-shadow(0 0 10px #E9C77B)}
+.gain{position:absolute;left:50%;top:-6%;transform:translateX(-50%);white-space:nowrap;background:#E9C77B;color:#1F1611;font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;animation:gainup 2.6s ease-out forwards;pointer-events:none;z-index:4}
+@keyframes gainup{0%{opacity:0;transform:translate(-50%,10px)}15%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-14px)}}
+@media (prefers-reduced-motion:reduce){.gain{animation:none}}

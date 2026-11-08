@@ -1,8 +1,8 @@
-import { LANDS, EMBLEM_SLOTS, LOADS, FREQS, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING } from './data.js';
+import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING } from './data.js';
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
   weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, replaceAll, resetAll } from './store.js';
 import { g, mood, weekMoonLabel, evaluateVisit, cardName, cardImg, cardQs, drawCard, canAskCard, nextCardDay,
-  detectThreads, threadFact, chapterDue, rangeStats } from './engine.js';
+  detectThreads, threadFact, chapterDue, rangeStats, callWitch } from './engine.js';
 
 const $app = document.getElementById('app');
 const APP_URL = location.origin + location.pathname;
@@ -57,6 +57,28 @@ function render(top = false) {
   $app.innerHTML = fn();
   window.scrollTo(0, top ? 0 : y);
   if (ui.focus) { const el = document.getElementById(ui.focus); if (el) el.focus(); ui.focus = null; }
+  if (route === 'map') animateStitches();
+}
+// Игла проходит по эмблеме: новые стежки проявляются на гобелене
+function animateStitches() {
+  const els = [...document.querySelectorAll('[data-anim-to]')];
+  if (!els.length) return;
+  els.forEach((el, i) => {
+    S.seenStitches[el.dataset.key] = Number(el.dataset.st);
+    setTimeout(() => {
+      el.style.transition = 'clip-path 1.8s cubic-bezier(.3,.7,.3,1)';
+      el.style.clipPath = `inset(${100 - Number(el.dataset.animTo)}% 0 0 0)`;
+      const slot = el.closest('.slot');
+      if (!slot) return;
+      slot.classList.add('glow');
+      const g = Number(el.dataset.gain);
+      const b = document.createElement('span');
+      b.className = 'gain'; b.textContent = `+${stitchW(g)}`;
+      slot.appendChild(b);
+      setTimeout(() => { slot.classList.remove('glow'); b.remove(); }, 2600);
+    }, 450 + i * 800);
+  });
+  save();
 }
 function toast(msg) {
   document.querySelectorAll('.toast').forEach((t) => t.remove());
@@ -85,7 +107,7 @@ function HINTS() {
       'Когда стежков наберётся на всю эмблему, земля вышита. Тогда можно надстроить новый ярус или повесить её на стену Летописи.',
       '«Изменить узоры» — добавить, убрать, поменять нагрузку и частоту.']],
     treasury: ['Как устроена сокровищница', [
-      '<b>Сундуки</b> — цели, на которые копишь. Нажми на сундук, чтобы положить или взять монеты.',
+      '<b>Сундуки</b> — накопления на цели: подушка, поездка, учёба. Это не ежемесячные конверты: деньги лежат в сундуке, пока ты сама не решишь их взять. Нажми на сундук, чтобы положить или взять.',
       'Каждая трата получает один из трёх видов: <b>Провизия</b> — необходимое и регулярное: аренда, продукты, проезд, связь. <b>Снаряжение</b> — то, что ты ценишь и во что вкладываешься. <b>Рассыпано</b> — на автопилоте или «не помню на что».',
       '<b>Постоянные траты</b> (аренда, подписки) можно завести один раз — они сами запишутся как провизия в свой день месяца.',
       '<b>Кошель</b> — сколько денег у тебя на руках. Сверь его: приложение запомнит сумму и дальше будет вычитать траты. Если при следующей сверке денег меньше, разница уйдёт в «рассыпано» — без упрёков.']],
@@ -238,7 +260,8 @@ SCR.weave = () => {
 <div class="scr paper"><div class="pad">
   <div class="topbar">${backBtn('weaveBack')}<span class="step">${P.mode === 'ob' ? `шаг 3 из 4 · земля ${idx + 1} из ${queue.length}` : queue.length > 1 ? `земля ${idx + 1} из ${queue.length}` : ''}</span></div>
   <div class="row">${emblemHtml(l, 56)}<div class="col" style="gap:0"><span class="step">Вшей узоры земли</span><h1 style="font-size:28px">${esc(landName(l))}</h1></div></div>
-  <p class="sub">Из чего для тебя складывается путь сюда? Тяжёлый узор даёт больше стежков, но и сил берёт больше.</p>
+  ${def?.leads ? `<p class="sub" style="color:var(--ink)">${esc(def.about)}. ${esc(def.leads)}</p>` : ''}
+  <p class="sub">Узоры — конкретные дела, из которых складывается путь сюда. Для каждого выбери, сколько сил он забирает и как часто ты хочешь его делать.</p>
   <div class="col">
   ${pats.map((p, i) => `
     <div class="box col" style="padding:10px 12px">
@@ -246,7 +269,7 @@ SCR.weave = () => {
         <button data-a="patDel" data-i="${i}" aria-label="Убрать узор ${esc(p.name)}" style="width:32px;height:32px;border:none;background:none;color:var(--muted)">${I.x}</button></div>
       <div class="row">
         <div role="group" aria-label="Нагрузка" class="seg grow" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:4px">
-          ${LOADS.map((lb, k) => `<button class="tile ${p.load === k + 1 ? 'on' : ''}" style="min-height:36px;padding:0;font-size:14px" data-a="patLoad" data-i="${i}" data-v="${k + 1}" aria-pressed="${p.load === k + 1}">${lb}</button>`).join('')}
+          ${LOADS.map((lb, k) => `<button class="tile ${p.load === k + 1 ? 'on' : ''}" style="min-height:44px;padding:2px 0;font-size:14px;line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center" data-a="patLoad" data-i="${i}" data-v="${k + 1}" aria-pressed="${p.load === k + 1}">${lb}<span style="font-size:11px;opacity:.8">${LOAD_HINT[k]}</span></button>`).join('')}
         </div>
         <div class="row" style="gap:2px">
           <button class="tile" style="width:36px;min-height:36px;padding:0;font-size:18px" data-a="patFreq" data-i="${i}" data-v="-1" aria-label="Реже">−</button>
@@ -323,9 +346,16 @@ SCR.map = () => {
     const pct = Math.round(p * 100);
     const done = p >= 1;
     const src = emblemSrc(l);
+    // анимация новых стежков: показываем прошлый уровень и дотягиваем до нового
+    const key = l.id + ':' + l.tier;
+    if (S.seenStitches[key] === undefined) S.seenStitches[key] = l.stitches;
+    const prev = Math.min(S.seenStitches[key], l.stitches);
+    const gain = l.stitches - prev;
+    const startPct = gain > 0 ? Math.round(Math.min(1, prev / l.target) * 100) : pct;
+    const anim = gain > 0 ? `data-anim-to="${pct}" data-key="${key}" data-st="${l.stitches}" data-gain="${gain}"` : '';
     const art = src
-      ? `<img class="pencil" src="${src}" alt=""><img src="${src}" alt="" style="clip-path:inset(${100 - pct}% 0 0 0)">`
-      : `<span class="ownland" style="filter:grayscale(1);opacity:.5">${esc((l.customName || '?')[0])}</span><span class="ownland" style="clip-path:inset(${100 - pct}% 0 0 0)">${esc((l.customName || '?')[0])}</span>`;
+      ? `<img class="pencil" src="${src}" alt=""><img src="${src}" alt="" ${anim} style="clip-path:inset(${100 - startPct}% 0 0 0)">`
+      : `<span class="ownland" style="filter:grayscale(1);opacity:.5">${esc((l.customName || '?')[0])}</span><span class="ownland" ${anim} style="clip-path:inset(${100 - startPct}% 0 0 0)">${esc((l.customName || '?')[0])}</span>`;
     return `<button class="slot" style="${pos}" data-a="openLand" data-id="${l.id}" aria-label="${esc(landName(l))}, вышито ${pct} процентов">${art}<span class="pill ${done ? 'done' : ''}">${esc(landShort(l))} · ${done ? 'вышито' : pct + '%'}</span></button>`;
   }).join('');
   return `
@@ -355,39 +385,90 @@ SCR.map = () => {
 };
 
 // ——— Земля ———
+const HORIZONS = [['месяц', 1], ['3 месяца', 3], ['полгода', 6], ['год', 12]];
+function goalCard(l) {
+  const g0 = l.goal;
+  const td = today();
+  const muted = 'color:#B9AECB';
+  if (ui.goalForm) {
+    const ex = landDef(l.id)?.goals || [];
+    const L = (letter, title, q) => `<span class="row" style="gap:8px;align-items:baseline"><b style="flex:0 0 22px;height:22px;border-radius:6px;background:var(--moon);color:#1E1530;display:inline-flex;align-items:center;justify-content:center;font-size:13px">${letter}</b><span style="font-size:15px"><b>${title}</b> <span style="${muted}">· ${q}</span></span></span>`;
+    return `<div class="col" style="gap:10px;padding:14px;border-radius:14px;background:rgba(255,255,255,.07)">
+      <span style="font-size:17px;color:var(--moon)">Цель для этой земли</span>
+      ${L('S', 'Конкретно', 'что именно хочу?')}
+      <input id="gText" class="field" style="height:44px" data-m="ui.gText" value="${esc(ui.gText || '')}" placeholder="${esc(ex[0] || 'Например: прочитать 12 книг')}">
+      ${ex.length ? `<div class="row" style="flex-wrap:wrap;gap:4px">${ex.map((x, i) => `<button class="chip" style="min-height:30px;font-size:12px;padding:0 10px;color:#EFE7F7;border-color:#4E3D73" data-a="goalEx" data-i="${i}">${esc(x)}</button>`).join('')}</div>` : ''}
+      ${L('M', 'Измеримо', 'как пойму, что получилось?')}
+      <div class="row"><input class="field" style="height:44px;width:96px" inputmode="decimal" data-m="ui.gTarget" value="${esc(ui.gTarget || '')}" placeholder="12"><input class="field grow" style="height:44px" data-m="ui.gUnit" value="${esc(ui.gUnit || '')}" placeholder="книг, клиентов, раз…"></div>
+      ${L('A', 'Достижимо', 'хватит ли сил?')}
+      <span style="font-size:14px;${muted}">Сейчас узоры этой земли берут ${threadW(weeklyLoad(l.patterns))} в неделю. Если цель большая, раздели её или дай больше времени.</span>
+      ${L('R', 'Значимо', 'зачем это мне?')}
+      <input class="field" style="height:44px" data-m="ui.gWhy" value="${esc(ui.gWhy || '')}" placeholder="Чтобы… (можно пропустить)">
+      ${L('T', 'Ограничено', 'к какому сроку?')}
+      <div class="row" style="flex-wrap:wrap;gap:6px">${HORIZONS.map(([t, m]) => `<button class="chip ${ui.gMonths === m ? 'on' : ''}" style="color:${ui.gMonths === m ? '#1E1530' : '#EFE7F7'};border-color:#4E3D73;${ui.gMonths === m ? 'background:var(--moon);border-color:var(--moon)' : ''}" data-a="set" data-k="gMonths" data-v="${m}">${t}</button>`).join('')}</div>
+      <div class="row"><button class="btn moon" style="min-height:46px" data-a="goalSave">Поставить цель</button><button class="btn ghost" style="min-height:46px;width:auto;color:#EFE7F7;border-color:#4E3D73" data-a="toggle" data-k="goalForm">Отмена</button></div>
+    </div>`;
+  }
+  if (!g0) {
+    return `<button data-a="goalOpen" class="row" style="padding:12px 14px;border-radius:14px;border:1px dashed #6E5F94;background:none;color:#EFE7F7;text-align:left">
+      <span class="col grow" style="gap:2px"><span style="font-size:16px;font-weight:700">Поставить цель</span><span style="font-size:13px;${muted}">конкретную, со сроком — чтобы видеть не только усилия, но и результат</span></span><span style="font-size:22px;color:var(--moon)">+</span></button>`;
+  }
+  const left = daysBetween(td, g0.due);
+  const pct = g0.target ? Math.min(100, Math.round((g0.current / g0.target) * 100)) : 0;
+  const done = !!g0.doneAt;
+  return `<div class="col ${ui.flash === 'goal' ? 'flash' : ''}" style="gap:8px;padding:14px;border-radius:14px;background:rgba(255,255,255,.07);${done ? 'box-shadow:inset 0 0 0 2px var(--moon)' : ''}">
+    <div class="row" style="justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:var(--moon);letter-spacing:.5px">${done ? 'ЦЕЛЬ ДОСТИГНУТА' : 'ЦЕЛЬ'}</span>
+      <span style="font-size:13px;${muted}">${done ? fmtDay(g0.doneAt) : left > 0 ? `осталось ${left} ${plural(left, 'день', 'дня', 'дней')} · до ${fmtShort(g0.due)}` : left === 0 ? 'срок сегодня' : 'срок прошёл'}</span></div>
+    <span style="font-size:17px;line-height:1.3">${esc(g0.text)}</span>
+    ${g0.why ? `<span style="font-size:14px;font-style:italic;${muted}">${esc(g0.why)}</span>` : ''}
+    ${g0.target ? `<div class="row"><div class="prog grow" style="background:rgba(255,255,255,.08)"><div style="width:${pct}%"></div></div><span style="font-size:14px;white-space:nowrap">${g0.current} из ${g0.target} ${esc(g0.unit || '')}</span></div>
+      ${done ? '' : `<div class="row" style="gap:6px"><button class="btn ghost" style="min-height:40px;width:auto;padding:0 14px;color:#EFE7F7;border-color:#4E3D73" data-a="goalStep" data-v="-1" aria-label="Минус один">−1</button><button class="btn moon" style="min-height:40px;font-size:15px" data-a="goalStep" data-v="1">+1 — ещё на шаг ближе</button></div>`}`
+    : done ? '' : `<button class="btn moon" style="min-height:42px;font-size:15px" data-a="goalDone">Цель достигнута</button>`}
+    ${!done && left < 0 ? `<span style="font-size:14px;${muted}">Срок прошёл — это не провал. Можно продлить, изменить цель или отпустить её.</span>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalExtend">+1 месяц</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalEdit">Изменить</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalDrop">Отпустить</button></div>`
+    : `<div class="row" style="gap:12px"><button class="link" style="padding:0;font-size:13px;color:#B9AECB" data-a="goalEdit">${done ? 'Новая цель' : 'Изменить'}</button>${done ? '' : `<button class="link" style="padding:0;font-size:13px;color:#B9AECB" data-a="goalDrop">Отпустить</button>`}</div>`}
+  </div>`;
+}
+
 SCR.land = () => {
   const l = landOf(P.id);
   if (!l) return SCR.map();
   const def = lookOf(l);
+  const own = landDef(l.id);
   const p = landProgress(l);
   const pct = Math.round(p * 100);
   const td = today();
-  const recent = S.steps.filter((s) => s.landId === l.id).slice(-5).reverse();
+  const recent = S.steps.filter((s) => s.landId === l.id && s.tier === l.tier).slice(-5).reverse();
   const tint = def?.tint || '#24170F';
   return `
 <div class="scr violet" style="background:${tint}">
-  ${sceneSrc(l) ? `<img class="hero-img" src="${sceneSrc(l)}" alt="" style="height:min(380px,45vh);object-position:center 35%">` : `<div style="height:200px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 60%,#5A3A26,${tint})">${emblemHtml(l, 120)}</div>`}
+  ${sceneSrc(l) ? `<img class="hero-img" src="${sceneSrc(l)}" alt="" style="height:min(340px,40vh);object-position:center 35%">` : `<div style="height:200px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 60%,#5A3A26,${tint})">${emblemHtml(l, 120)}</div>`}
   <button class="back" data-a="go" data-to="map" aria-label="Назад к карте" style="position:absolute;left:16px;top:calc(16px + var(--safe-t));background:${tint};border-color:#4E3D73;color:#EFE7F7">${I.back}</button>
   <div class="sheetup" style="background:${tint};padding:18px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:14px">
     <div class="row" style="justify-content:space-between;align-items:flex-end">
-      <div class="col" style="gap:2px"><h1>${esc(landName(l))}</h1><span style="font-size:15px;color:#B9AECB">${esc(landDef(l.id)?.about || 'Своя земля')}${l.tier > 1 ? ` · ${def?.tier || 'ярус'} ${l.tier}` : ''}</span></div>
+      <div class="col" style="gap:2px"><h1>${esc(landName(l))}</h1><span style="font-size:15px;color:#B9AECB">${esc(own?.about || 'Своя земля')}${l.tier > 1 ? ` · ${def?.tier || 'ярус'} ${l.tier}` : ''}</span></div>
       <span class="row" style="gap:8px;font-size:15px;color:var(--moon);white-space:nowrap">${pct}%${helpBtn('land')}</span>
     </div>
+    ${own?.leads ? `<p style="margin:0;font-size:14px;line-height:1.4;color:#D9D0E8">${esc(own.leads)}</p>` : ''}
     ${hint('land')}
-    <div class="prog" role="img" aria-label="Вышито ${pct} процентов" style="background:rgba(255,255,255,.08)"><div style="width:${pct}%"></div></div>
-    <span style="font-size:14px;color:#B9AECB">${stitchW(l.stitches)} из ${l.target}</span>
+    ${goalCard(l)}
+    <div class="col" style="gap:4px"><div class="prog" role="img" aria-label="Вышито ${pct} процентов" style="background:rgba(255,255,255,.08)"><div style="width:${pct}%"></div></div>
+    <span style="font-size:13px;color:#B9AECB">Вовлечённость: ${stitchW(l.stitches)} из ${l.target} — столько нужно, чтобы вышить эмблему</span></div>
     ${p >= 1 ? `<button class="btn moon" data-a="go" data-to="complete" data-id="${l.id}">Земля вышита — что дальше?</button>` : ''}
-    <div class="row" style="justify-content:space-between;align-items:baseline"><span style="font-size:16px;color:var(--moon)">Узоры этой земли</span>
+    <div class="row" style="justify-content:space-between;align-items:baseline"><span style="font-size:16px;color:var(--moon)">Узоры — дела этой земли</span>
       <button class="link" style="color:#D9D0E8;padding:6px 0" data-a="weaveEdit" data-id="${l.id}">Изменить узоры</button></div>
     <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px">
     ${l.patterns.length ? l.patterns.map((pt) => {
       const n = S.steps.filter((s) => s.date === td && s.patternId === pt.id).length;
-      return `<li style="display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
-        <span class="col grow" style="gap:0"><span style="font-size:16px">${esc(pt.name)}</span><span style="font-size:13px;color:#B9AECB">${LOADS[pt.load - 1].toLowerCase()} · ${FREQS[pt.freq][0]} · ${threadW(pt.load)}</span></span>
-        <button data-a="stepDo" data-land="${l.id}" data-p="${pt.id}" style="flex:0 0 auto;height:38px;padding:0 12px;border-radius:10px;font-size:14px;border:1px solid var(--moon);${n ? 'background:transparent;color:var(--moon)' : 'background:var(--moon);color:#1E1530'}">${n ? `Вшито${n > 1 ? ' ×' + n : ''} · ещё` : w('Сделала', 'Сделал')}</button></li>`;
+      const ask = ui.confirmStep === pt.id;
+      return `<li style="display:flex;flex-direction:column;gap:6px;padding:6px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+        <div class="row" style="min-height:40px"><span class="col grow" style="gap:0"><span style="font-size:16px">${esc(pt.name)}</span><span style="font-size:13px;color:#B9AECB">${FREQS[pt.freq][0]} · ${LOAD_HINT[pt.load - 1]} · +${stitchW(pt.load)}</span></span>
+        <button data-a="stepDo" data-land="${l.id}" data-p="${pt.id}" style="flex:0 0 auto;height:38px;padding:0 12px;border-radius:10px;font-size:14px;border:1px solid var(--moon);${n ? 'background:transparent;color:var(--moon)' : 'background:var(--moon);color:#1E1530'}">${n ? `Сегодня ×${n} · ещё` : w('Сделала', 'Сделал')}</button></div>
+        ${ask ? `<div class="row" style="gap:6px;font-size:14px"><span class="grow">Только что отмечено. Ещё раз?</span><button class="chip" style="color:#1E1530;background:var(--moon);border-color:var(--moon)" data-a="stepDo" data-land="${l.id}" data-p="${pt.id}" data-force="1">Да</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="set" data-k="confirmStep" data-v="0">Нет</button></div>` : ''}
+      </li>`;
     }).join('') : `<li style="font-size:15px;color:#B9AECB">Узоров пока нет. <button class="link" style="color:#D9D0E8;padding:0" data-a="weaveEdit" data-id="${l.id}">Вшить узоры</button></li>`}
     </ul>
-    ${recent.length ? `<div class="col" style="gap:4px"><span style="font-size:14px;color:#B9AECB">Последние стежки</span>${recent.map((s) => `<span style="font-size:14px">${fmtShort(s.date)} · ${esc(s.name)} · +${s.stitches}</span>`).join('')}</div>` : ''}
+    ${recent.length ? `<div class="col" style="gap:2px"><span style="font-size:14px;color:#B9AECB">Последние стежки — лишний можно убрать</span>${recent.map((s) => `<div class="row" style="font-size:14px;justify-content:space-between"><span>${fmtShort(s.date)} · ${esc(s.name)} · +${s.stitches}</span><button data-a="stepUndo" data-i="${S.steps.indexOf(s)}" aria-label="Убрать стежок" style="width:36px;height:32px;border:none;background:none;color:#B9AECB">${I.x}</button></div>`).join('')}</div>` : ''}
   </div>
 </div>`;
 };
@@ -472,11 +553,11 @@ SCR.evening = () => {
     ${carried ? `<div class="box col"><span class="lbl">Вопрос из котомки</span><span style="font-size:16px;line-height:1.35">${esc(carried.q)}</span>
       <textarea class="field" rows="2" data-m="ui.carriedAns" placeholder="Можно пару слов — или оставить">${esc(ui.carriedAns || '')}</textarea></div>` : ''}
     ${needBackup ? `<button class="box row" data-a="go" data-to="backup" style="text-align:left;color:inherit"><span class="grow" style="font-size:15px">Воскресенье. Сохранишь копию летописи?</span>${I.chev}</button>` : ''}
-    <div class="col" style="gap:6px"><span class="lbl">Сколько в тебе сил</span>
+    <div class="col" style="gap:6px"><span class="lbl">Сколько в тебе сил <span style="font-size:13px;color:var(--nmuted)">· чем полнее луна, тем больше</span></span>
       <div class="row" style="justify-content:space-between">${[2, 5, 8, 11, 13].map((r, i) => `<button data-a="set" data-k="energy" data-v="${i}" aria-label="${energyName(i)}" aria-pressed="${ui.energy === i}" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;background:${ui.energy === i ? '#232C55' : 'transparent'};border:2px solid ${ui.energy === i ? 'var(--pink)' : 'transparent'}"><svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#C9B26A" stroke-width="1.5"/><circle cx="15" cy="15" r="${r}" fill="#E9C77B"/></svg></button>`).join('')}</div>
       <span class="small center" style="color:var(--nmuted)">${energyName(ui.energy)}</span></div>
-    <div class="col" style="gap:6px"><span class="lbl">Небо над тобой</span>
-      <div class="seg" style="grid-template-columns:repeat(5,minmax(0,1fr))">${SKIES.map((s, i) => `<button class="chip ${ui.sky === i ? 'on' : ''}" style="padding:0 2px" data-a="set" data-k="sky" data-v="${i}" aria-pressed="${ui.sky === i}">${s}</button>`).join('')}</div></div>
+    <div class="col" style="gap:6px"><span class="lbl">Небо над тобой <span style="font-size:13px;color:var(--nmuted)">· твоё настроение, не погода</span></span>
+      <div class="seg" style="grid-template-columns:repeat(5,minmax(0,1fr))">${SKIES.map((s, i) => `<button class="chip ${ui.sky === i ? 'on' : ''}" style="padding:4px 2px;border-radius:14px;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1" data-a="set" data-k="sky" data-v="${i}" aria-pressed="${ui.sky === i}">${s}<span style="font-size:11px;opacity:.8">${SKY_HINT[i]}</span></button>`).join('')}</div></div>
     <div class="col"><span class="lbl">Шаг дня — к какой земле?</span>
       <div style="display:grid;grid-template-columns:repeat(${Math.min(5, lands.length + 1)},minmax(0,1fr));gap:6px">
       ${lands.map((l) => `<button data-a="eveLand" data-v="${l.id}" aria-pressed="${ui.land === l.id}" style="background:none;border:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px">${emblemHtml(l, 54, `box-sizing:border-box;border:3px solid ${ui.land === l.id ? 'var(--pink)' : 'transparent'};opacity:${ui.land === l.id ? 1 : 0.7}`)}${esc(landShort(l))}</button>`).join('')}
@@ -501,7 +582,7 @@ function eveningDone() {
     <span class="goth" style="font-size:30px;color:var(--moon)">${n ? `+${stitchW(n)}` : 'Привал вплетён'}</span>
     <p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">${n ? 'Нить легла в гобелен. Отдыхай — огонь присмотрит за дорогой.' : 'Даже день без шагов — часть пути. Отдыхай.'}</p>
     ${pending ? `<button class="btn gold" data-a="go" data-to="visit">У костра тебя кто-то ждёт</button>` : ''}
-    <button class="btn ghost" data-a="go" data-to="map">К гобелену</button>
+    <button class="btn ${pending ? 'ghost' : 'gold'}" data-a="go" data-to="map">${n ? 'Посмотреть, как легли стежки' : 'К гобелену'}</button>
   </div>
   ${tabbar('camp', true)}
 </div>`;
@@ -517,7 +598,7 @@ SCR.visit = () => {
 <div class="scr night">
   <img class="hero-img" src="img/scene/witch_${S.hero}.webp" alt="" style="height:min(470px,52vh);object-position:center 58%">
   <div class="sheetup" style="background:var(--night);border-top:1px solid var(--gold);padding:22px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:14px">
-    <p class="box" style="margin:0;font-size:15px;line-height:1.4">${ui.done === 'carry' ? 'Вопрос лёг в твою котомку. Он подождёт тебя у вечернего костра.' : 'Ответ вплетён в гобелен золотой нитью. Однажды Странствующая вернёт тебе эти слова.'}</p>
+    <p class="box" style="margin:0;font-size:15px;line-height:1.4">${ui.done === 'carry' ? 'Вопрос лёг в твою котомку. Он подождёт тебя у вечернего костра.' : 'Ответ сохранён в Летописи. Через несколько недель Странствующая может напомнить тебе эти слова.'}</p>
     ${ui.cardNext ? `<p style="margin:0;font-size:16px;font-style:italic;color:var(--lav)">«Подожди, не уходи. У меня с собой колода».</p><button class="btn gold" data-a="go" data-to="card" data-src="visit">Вытянуть карту</button>` : `<button class="btn gold" data-a="go" data-to="map">Вернуться к гобелену</button>`}
   </div>
 </div>`;
@@ -533,7 +614,8 @@ SCR.visit = () => {
     <h2 style="margin:0;font-weight:400;font-size:23px;line-height:1.25">${esc(v.q)}</h2>
     <label class="col" style="font-size:13px">Твой ответ (необязательно)<textarea class="field" rows="3" data-m="ui.ans" placeholder="Можно пару слов…">${esc(ui.ans || '')}</textarea></label>
     ${v.vow ? `<button class="chip gold ${ui.vow ? 'on' : ''}" data-a="toggle" data-k="vow" aria-pressed="${!!ui.vow}" style="align-self:flex-start;text-align:left;min-height:44px;border-radius:12px;padding:6px 12px;line-height:1.3">${ui.vow ? '✓ ' : ''}Малый обет на неделю: ${esc(v.vow)}</button>` : ''}
-    <div class="row"><button class="btn gold" style="font-size:15px" data-a="visitWeave">Вплести ответ</button><button class="btn ghost" style="font-size:15px" data-a="visitCarry">Унести с собой</button></div>
+    <div class="row"><button class="btn gold" style="font-size:15px" data-a="visitWeave">Вплести ответ</button><button class="btn ghost" style="font-size:15px" data-a="visitCarry">Подумаю позже</button></div>
+    <span class="small center" style="color:var(--nmuted)">«Подумаю позже» — вопрос подождёт тебя вечером у костра</span>
     <button class="link" data-a="go" data-to="map">Не сейчас</button>
   </div>
 </div>`;
@@ -562,7 +644,7 @@ SCR.card = () => {
       <p style="margin:0;font-size:20px;line-height:1.3">${esc(q[0])}</p>
       <p style="margin:0;font-size:17px;line-height:1.35;color:var(--lav)">${esc(q[1])}</p>
       <textarea class="field" rows="3" data-m="ui.cans" placeholder="Можно ответить — или просто подумать">${esc(ui.cans || '')}</textarea>
-      <div class="col mt-auto"><button class="btn gold" data-a="cardSave" data-v="weave">Вплести в Летопись</button><button class="btn ghost" data-a="cardSave" data-v="carry">Унести с собой</button></div></div>`;
+      <div class="col mt-auto"><button class="btn gold" data-a="cardSave" data-v="weave">Вплести в Летопись</button><button class="btn ghost" data-a="cardSave" data-v="carry">Подумаю позже</button><span class="small center" style="color:var(--nmuted)">Карта сохранится в Летописи, а её вопрос подождёт тебя вечером у костра</span></div></div>`;
   }
   return `
 <div class="scr night"><div class="pad">
@@ -598,7 +680,7 @@ SCR.treasury = () => {
         return `<button data-a="chestOpen" data-id="${c.id}" style="display:flex;flex-direction:column;gap:3px;background:none;border:none;padding:0;text-align:left;color:inherit">
           <span class="row" style="justify-content:space-between;width:100%;font-size:15px"><span>${esc(c.name)}</span><span style="color:#E8C27A">${val}</span></span>
           <span class="prog" role="img" aria-label="${esc(c.name)}" style="display:block;width:100%"><span style="display:block;height:100%;width:${pct ?? (c.saved ? 100 : 0)}%;background:repeating-linear-gradient(90deg,#E8B04A 0 6px,#C98E2E 6px 8px)"></span></span></button>
-          ${ui.chest === c.id ? `<div class="row"><input class="field grow" style="height:44px" inputmode="numeric" data-m="ui.chestAmt" placeholder="₽" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div>` : ''}`;
+          ${ui.chest === c.id ? `<span style="font-size:13px;line-height:1.35;color:#D8C7AC">Сундук — это накопление на цель, а не ежемесячный конверт. «Положить» — отложить деньги сюда${T.wallet !== null ? ' (они уйдут из кошеля)' : ''}. «Взять» — достать обратно, например чтобы потратить на эту цель.</span><div class="row"><input class="field grow" style="height:44px" inputmode="numeric" data-m="ui.chestAmt" placeholder="₽" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div>` : ''}`;
       }).join('') : '<p class="sub">Сундуков пока нет. Их можно завести в Котомке.</p>'}
     </div>
     ${T.wallet !== null ? `<div class="row ${ui.flash === 'wallet' ? 'flash' : ''}" style="justify-content:space-between;font-size:15px;padding:6px 8px;margin:0 -8px;border-radius:8px"><span>В кошеле${ui.flash === 'wallet' ? ' · запомнила' : ''}</span><span style="color:#E8C27A">${hide ? '•••' : money(T.wallet)}</span></div>` : ''}
@@ -650,7 +732,8 @@ SCR.spells = () => {
   ${hint('spells')}
   <div class="col" style="gap:10px">
   ${S.spells.map((sp) => {
-    const c = sp.casts.find((x) => x.date === td);
+    const todays = sp.casts.filter((x) => x.date === td);
+    const c = todays[todays.length - 1];
     const st = spellStats(sp);
     const l = sp.landId ? landOf(sp.landId) : null;
     const month = sp.casts.filter((x) => daysBetween(x.date, td) < 30);
@@ -658,15 +741,15 @@ SCR.spells = () => {
     for (const x of month) { const v = sp[x.kind]; if (x.amount && v.unit) sums[v.unit] = (sums[v.unit] || 0) + Number(x.amount); }
     const sumTxt = Object.entries(sums).map(([u, n]) => `${Math.round(n * 10) / 10} ${u}`).join(' · ');
     const casting = ui.casting && ui.casting.id === sp.id;
-    const b = (kind, label) => `<button data-a="castOpen" data-id="${sp.id}" data-v="${kind}" aria-pressed="${c?.kind === kind}" style="flex:1 1 0;min-height:56px;padding:6px 10px;border-radius:10px;font-size:14px;text-align:left;display:flex;flex-direction:column;gap:2px;${c?.kind === kind ? 'background:#9A4A2A;color:#FFF8EC;border:1px solid #9A4A2A' : casting && ui.casting.kind === kind ? 'background:#F7EBCB;border:1px solid #C9A24A' : 'background:transparent;border:1px solid #CBB99B'}"><span style="font-size:11px;opacity:.85">${label}</span>${esc(spellPart(sp[kind]))}</button>`;
+    const b = (kind, label) => `<button data-a="castOpen" data-id="${sp.id}" data-v="${kind}" style="flex:1 1 0;min-height:56px;padding:6px 10px;border-radius:10px;font-size:14px;text-align:left;display:flex;flex-direction:column;gap:2px;${casting && ui.casting.kind === kind ? 'background:#F7EBCB;border:1px solid #C9A24A' : 'background:transparent;border:1px solid #CBB99B'}"><span style="font-size:11px;opacity:.85">${label}</span>${esc(spellPart(sp[kind]))}</button>`;
     return `<div class="box col ${ui.flash === sp.id ? 'flash' : ''}" style="gap:10px;${c ? 'border-color:#C9A24A;background:#FBF3DE' : ''}">
       <div class="row" style="justify-content:space-between;align-items:flex-start">
         <span class="row" style="gap:8px">${l ? emblemHtml(l, 28) : ''}<span class="col" style="gap:0"><span style="font-size:17px;font-weight:700">${esc(sp.name)}</span>${l ? `<span style="font-size:12px;color:var(--muted)">питает землю «${esc(landShort(l))}»</span>` : ''}</span></span>
         <span class="row" style="gap:4px"><span style="font-size:12px;color:var(--muted);text-align:right">${st.total ? `${st.total} ${plural(st.total, 'раз', 'раза', 'раз')} · возвращений: ${st.returns}` : 'ещё не звучало'}</span>
         ${ui.edit ? `<button data-a="spellDel" data-id="${sp.id}" aria-label="Удалить заклинание ${esc(sp.name)}" style="width:32px;height:32px;border:none;background:none;color:var(--muted)">${I.x}</button>` : ''}</span></div>
-      ${c ? `<div class="row" style="justify-content:space-between;font-size:14px;color:#6B4A12"><span>✦ Сегодня прочитано: ${c.kind === 'great' ? 'великое' : 'малое'}${c.amount ? ` · ${c.amount} ${sp[c.kind].unit}` : ''}</span><button class="link" style="padding:0;font-size:13px" data-a="castUndo" data-id="${sp.id}">отменить</button></div>`
-        : `<div class="row" style="gap:8px">${b('small', 'малое')}${b('great', 'великое')}</div>`}
-      ${casting && !c ? `<div class="col" style="gap:8px"><label class="row" style="font-size:15px">Сколько сегодня?<input id="castAmt" class="field grow" style="height:44px" inputmode="decimal" data-m="ui.castAmt" value="${esc(ui.castAmt ?? '')}" placeholder="можно не писать"><span>${esc(sp[ui.casting.kind].unit || '')}</span></label>
+      ${c ? `<div class="row" style="justify-content:space-between;font-size:14px;color:#6B4A12"><span>✦ Сегодня${todays.length > 1 ? ' ×' + todays.length : ''}: ${todays.map((x) => (x.kind === 'great' ? 'великое' : 'малое') + (x.amount ? ` ${x.amount} ${sp[x.kind].unit}` : '')).join(', ')}</span><button class="link" style="padding:0;font-size:13px" data-a="castUndo" data-id="${sp.id}">отменить последнее</button></div>` : ''}
+      <div class="row" style="gap:8px">${b('small', c ? 'ещё малое' : 'малое')}${b('great', c ? 'ещё великое' : 'великое')}</div>
+      ${casting ? `<div class="col" style="gap:8px"><label class="row" style="font-size:15px">Сколько сегодня?<input id="castAmt" class="field grow" style="height:44px" inputmode="decimal" data-m="ui.castAmt" value="${esc(ui.castAmt ?? '')}" placeholder="можно не писать"><span>${esc(sp[ui.casting.kind].unit || '')}</span></label>
         <div class="row"><button class="btn" style="min-height:46px" data-a="castDo">Прочитать заклинание</button><button class="btn ghost" style="min-height:46px;width:auto" data-a="castCancel">Отмена</button></div></div>` : ''}
       ${sumTxt ? `<span style="font-size:13px;color:var(--muted)">За 30 дней: ${sumTxt}</span>` : ''}
     </div>`;
@@ -744,6 +827,8 @@ SCR.journal = () => {
   ${newThread ? `<button data-a="go" data-to="thread" data-key="${newThread.key}" class="goldbox row" style="text-align:left;color:inherit">${I.thread}<span class="grow" style="font-size:15px;line-height:1.3">Кажется, появилась одна повторяющаяся нить. Хочешь на неё посмотреть?</span>${I.chev}</button>` : ''}
   ${canAskCard() ? `<button class="box row" data-a="go" data-to="card" data-src="ask" style="text-align:left;color:inherit"><img src="img/card/back.webp" alt="" style="width:34px;height:55px;border-radius:4px"><span class="grow col" style="gap:0"><span style="font-size:16px;font-weight:700">Вытянуть карту</span><span class="small">одна карта в неделю</span></span>${I.chev}</button>`
     : `<span class="small" style="color:var(--muted)">Следующую карту можно вытянуть с ${fmtDay(nextCardDay())}</span>`}
+  ${S.witch.pending ? `<button class="box row" data-a="go" data-to="visit" style="text-align:left;color:inherit"><div class="ava" role="img" aria-label=""></div><span class="grow" style="font-size:16px">Странствующая ждёт тебя у костра</span>${I.chev}</button>`
+    : S.witch.lastVisit === today() ? '' : `<button class="box row" data-a="callWitch" style="text-align:left;color:inherit"><div class="ava" role="img" aria-label=""></div><span class="grow col" style="gap:0"><span style="font-size:16px;font-weight:700">Позвать Странствующую</span><span class="small">она задаст один вопрос</span></span>${I.chev}</button>`}
   ${wall.length ? `<div class="col" style="gap:6px"><span class="lbl">Стена Летописи</span><div class="row" style="flex-wrap:wrap;gap:12px">${wall.map((x) => `<span class="col" style="align-items:center;gap:2px;font-size:12px;width:72px;text-align:center">${emblemHtml(x, 56, 'box-shadow:0 0 0 3px #E9C77B')}${esc(x.customName || landDef(x.id)?.short || '')}</span>`).join('')}</div></div>` : ''}
   <div role="group" aria-label="Что показывать" class="row" style="flex-wrap:wrap;gap:6px">${filters.map((f, i) => `<button class="chip ${ui.filter === i ? 'on' : ''}" style="min-height:36px" data-a="set" data-k="filter" data-v="${i}" aria-pressed="${ui.filter === i}">${f}</button>`).join('')}</div>
   ${ui.writing ? `<div class="box col"><textarea id="noteTa" class="field" rows="4" data-m="ui.noteText" placeholder="Что хочется оставить в летописи?">${esc(ui.noteText || '')}</textarea>
@@ -826,6 +911,7 @@ SCR.chapter = () => {
 SCR.settings = () => {
   const rows = [
     ['Путеводитель', 'Как всё устроено: земли, привалы, сокровищница, заклинания', 'guide'],
+    ['Странствующая', { auto: 'Приходит сама, когда почувствует', rare: 'Приходит редко', call: 'Приходит, только когда позовёшь' }[S.settings.witchFreq || 'auto'], 'witchset'],
     ['Напоминания', 'Утренние сборы и привал в Календаре', 'reminders'],
     ['Герой и имя', `${S.hero === 'm' ? 'Странник' : 'Странница'}${S.name ? ' · ' + esc(S.name) : ''}`, 'heroEdit'],
     ['Мои земли', 'Сменить, усыпить, добавить свою', 'landsEdit'],
@@ -843,6 +929,19 @@ SCR.settings = () => {
   <button data-a="go" data-to="safety" class="row mt-auto" style="min-height:58px;padding:8px 14px;border-radius:12px;background:var(--night2);color:#F1E9D8;border:none;text-align:left">${I.heart}
     <span class="col grow" style="gap:0"><span style="font-size:17px;font-weight:700">Если тяжело</span><span style="font-size:14px;color:#C9C3D6">Близкие люди и помощь, всегда под рукой</span></span></button>
   <p class="small center" style="margin:0;color:var(--muted)">Шрифты: Gatchina — Dimitri Antonov / Blue Curve Designstudio (CC BY 4.0), Brahms Gotisch — Sasha Pavljenko.</p>
+</div></div>`;
+};
+
+SCR.witchset = () => {
+  const opts = [['auto', 'Как сама решит', 'Приходит, когда замечает перемены: спад, подъём, паузу, заросшую тропу. Не чаще раза в 5 дней.'],
+    ['rare', 'Редко', 'Не чаще раза в две недели и только с важным.'],
+    ['call', 'Только когда позову', 'Сама не приходит. Позвать её можно в Летописи. Если тебе долго тяжело, она всё равно напомнит о близких и о помощи.']];
+  const cur = S.settings.witchFreq || 'auto';
+  return `
+<div class="scr paper"><div class="pad">
+  <div class="row">${backBtn('settings')}<h1 style="font-size:30px">Странствующая</h1></div>
+  <p class="sub">Как часто ей приходить к твоему костру?</p>
+  <div class="col">${opts.map(([k, t, d]) => `<button data-a="witchFreq" data-v="${k}" aria-pressed="${cur === k}" class="col" style="gap:2px;padding:12px 14px;border-radius:12px;text-align:left;color:inherit;${cur === k ? 'background:#F7EBCB;border:2px solid #9A4A2A' : 'background:var(--card);border:1px solid var(--line2)'}"><span style="font-size:17px;font-weight:700">${t}</span><span style="font-size:14px;color:var(--muted)">${d}</span></button>`).join('')}</div>
 </div></div>`;
 };
 
@@ -993,8 +1092,8 @@ A.landsNext = () => go('weave', { mode: 'ob', queue: ob.picked.slice(), idx: 0 }
 A.patDel = (d) => { ui.pats.splice(Number(d.i), 1); render(); };
 A.patLoad = (d) => { ui.pats[Number(d.i)].load = Number(d.v); render(); };
 A.patFreq = (d) => { const p = ui.pats[Number(d.i)]; p.freq = Math.max(0, Math.min(FREQS.length - 1, p.freq + Number(d.v))); render(); };
-A.patAdd = (d) => { ui.pats.push({ id: uid(), name: d.name, load: 2, freq: 1 }); render(); };
-A.patAddOwn = () => { const n = (ui.newPat || '').trim(); if (!n) return; ui.pats.push({ id: uid(), name: n, load: 2, freq: 1 }); ui.newPat = ''; ui.focus = 'ownPat'; render(); };
+A.patAdd = (d) => { ui.pats.push({ id: uid(), name: d.name, load: 2, freq: 3 }); render(); };
+A.patAddOwn = () => { const n = (ui.newPat || '').trim(); if (!n) return; ui.pats.push({ id: uid(), name: n, load: 2, freq: 3 }); ui.newPat = ''; ui.focus = 'ownPat'; render(); };
 function storePats() {
   const id = P.queue[P.idx || 0];
   if (P.mode === 'ob') ob.patterns[id] = ui.pats;
@@ -1023,6 +1122,8 @@ function weaveBack() {
   go('settings');
 }
 A.weaveEdit = (d) => go('weave', { mode: 'edit', queue: [d.id], idx: 0, back: d.back });
+A.witchFreq = (d) => { S.settings.witchFreq = d.v; if (d.v === 'call' && S.witch.pending?.type !== 'safety') S.witch.pending = null; save(); toast('Сохранено'); render(); };
+A.callWitch = () => { callWitch(); save(); go('visit'); };
 A.hintsReset = () => { S.seen = {}; save(); toast('Подсказки снова появятся на экранах'); };
 
 // сундуки
@@ -1076,12 +1177,52 @@ A.openLand = (d) => { const l = landOf(d.id); if (l && landProgress(l) >= 1 && !
 A.stepDo = (d) => {
   const l = landOf(d.land);
   const p = l.patterns.find((x) => x.id === d.p);
+  const last = [...S.steps].reverse().find((x) => x.patternId === p.id);
+  if (!d.force && last && last.at && Date.now() - last.at < 90000) { ui.confirmStep = p.id; return render(); }
+  ui.confirmStep = null;
   const n = addStep(l.id, p);
+  S.steps[S.steps.length - 1].at = Date.now();
   save();
   toast(`+${stitchW(n)} вплетено в землю «${landShort(l)}»`);
   if (landProgress(l) >= 1 && !l.doneSeen) { l.doneSeen = true; save(); return go('complete', { id: l.id }); }
   render();
 };
+A.stepUndo = (d) => {
+  const st = S.steps[Number(d.i)];
+  if (!st) return;
+  const l = landOf(st.landId);
+  if (l && l.tier === st.tier) l.stitches = Math.max(0, l.stitches - st.stitches);
+  S.steps.splice(Number(d.i), 1);
+  if (l) S.seenStitches[l.id + ':' + l.tier] = l.stitches;
+  save(); toast('Стежок убран'); render();
+};
+const curLand = () => landOf(P.id);
+A.goalOpen = () => { Object.assign(ui, { goalForm: true, gText: '', gTarget: '', gUnit: '', gWhy: '', gMonths: 3, focus: 'gText' }); render(); };
+A.goalEx = (d) => { ui.gText = (landDef(P.id)?.goals || [])[Number(d.i)] || ''; const m = ui.gText.match(/(\d+)\s+([а-яё]+)/i); if (m && !ui.gTarget) { ui.gTarget = m[1]; ui.gUnit = m[2]; } render(); };
+A.goalSave = () => {
+  const text = (ui.gText || '').trim();
+  if (!text) return toast('Что именно хочешь? Одной фразой');
+  const due = new Date(); due.setMonth(due.getMonth() + (ui.gMonths || 3));
+  const l = curLand();
+  l.goal = { text, target: num(ui.gTarget) || 0, unit: (ui.gUnit || '').trim(), current: 0, why: (ui.gWhy || '').trim(), due: dayKey(due), since: today(), doneAt: null };
+  S.journal.push({ id: uid(), kind: 'land', date: today(), text: `${landName(l)}: новая цель — ${text}` });
+  save(); ui.goalForm = false; toast('Цель поставлена'); render();
+};
+function goalReached(l) {
+  l.goal.doneAt = today();
+  S.journal.push({ id: uid(), kind: 'land', date: today(), text: `${landName(l)}: цель достигнута — ${l.goal.text}` });
+  toast('Цель достигнута! Это твоя победа');
+}
+A.goalStep = (d) => {
+  const l = curLand(); const g0 = l.goal;
+  g0.current = Math.max(0, g0.current + Number(d.v));
+  if (g0.target && g0.current >= g0.target) goalReached(l);
+  save(); flash('goal');
+};
+A.goalDone = () => { goalReached(curLand()); save(); flash('goal'); };
+A.goalExtend = () => { const g0 = curLand().goal; const d = parseDay(today()); d.setMonth(d.getMonth() + 1); g0.due = dayKey(d); save(); toast('Срок продлён на месяц'); render(); };
+A.goalEdit = () => { const g0 = curLand().goal; Object.assign(ui, { goalForm: true, gText: g0.doneAt ? '' : g0.text, gTarget: g0.doneAt ? '' : (g0.target || ''), gUnit: g0.doneAt ? '' : g0.unit, gWhy: g0.doneAt ? '' : g0.why, gMonths: 3 }); render(); };
+A.goalDrop = () => { const l = curLand(); S.journal.push({ id: uid(), kind: 'land', date: today(), text: `${landName(l)}: цель отпущена — ${l.goal.text}` }); l.goal = null; save(); toast('Цель отпущена. Это тоже решение'); render(); };
 A.landGrow = (d) => {
   const l = landOf(d.id);
   l.tier += 1; l.stitches = 0; l.doneSeen = false; l.target = tierTarget(l.patterns);
@@ -1157,6 +1298,7 @@ A.cardPick = () => { ui.step = 1; render(); };
 A.cardReveal = () => { ui.step = 2; render(); };
 A.cardSave = (d) => {
   S.journal.push({ id: uid(), date: today(), kind: 'card', cardId: ui.card.id, seen: (ui.seen || '').trim(), answer: (ui.cans || '').trim(), carried: d.v === 'carry' });
+  if (d.v === 'carry') S.witch.carried = { q: `Карта «${cardName(ui.card)}»: ${cardQs(ui.card)[0]}`, date: today() };
   S.witch.lastCard = today();
   save();
   go(d.v === 'weave' ? 'journal' : 'map');
@@ -1226,7 +1368,6 @@ A.castCancel = () => { ui.casting = null; render(); };
 A.castDo = () => {
   const sp = S.spells.find((x) => x.id === ui.casting.id);
   const kind = ui.casting.kind, td = today();
-  sp.casts = sp.casts.filter((x) => x.date !== td);
   const amount = String(ui.castAmt ?? '').trim();
   sp.casts.push({ date: td, kind, amount: amount ? num(amount) : '' });
   let msg = `Заклинание «${sp.name}» прочитано`;
@@ -1243,10 +1384,10 @@ A.castDo = () => {
 A.castUndo = (d) => {
   const sp = S.spells.find((x) => x.id === d.id);
   const td = today();
-  sp.casts = sp.casts.filter((x) => x.date !== td);
-  const st = S.steps.filter((x) => x.date === td && x.src === 'spell' && x.spellId === sp.id);
-  for (const x of st) { const l = landOf(x.landId); if (l && l.tier === x.tier) l.stitches = Math.max(0, l.stitches - x.stitches); }
-  S.steps = S.steps.filter((x) => !st.includes(x));
+  const lastCast = [...sp.casts].reverse().find((x) => x.date === td);
+  if (lastCast) sp.casts.splice(sp.casts.lastIndexOf(lastCast), 1);
+  const x = [...S.steps].reverse().find((q) => q.date === td && q.src === 'spell' && q.spellId === sp.id);
+  if (x) { const l = landOf(x.landId); if (l && l.tier === x.tier) l.stitches = Math.max(0, l.stitches - x.stitches); S.steps.splice(S.steps.lastIndexOf(x), 1); }
   save(); render();
 };
 A.spellSeed = (d) => {
@@ -1333,6 +1474,20 @@ document.addEventListener('change', async (e) => {
     go(S.onboarded ? 'map' : 'start');
   } catch (err) { toast('Это не похоже на копию гобелена'); }
 });
+
+// жест «назад»: свайп от левого края
+let tx = null, ty = 0;
+document.addEventListener('touchstart', (e) => { const t = e.touches[0]; tx = t.clientX < 28 ? t.clientX : null; ty = t.clientY; }, { passive: true });
+document.addEventListener('touchend', (e) => {
+  if (tx === null) return;
+  const t = e.changedTouches[0];
+  if (t.clientX - tx > 70 && Math.abs(t.clientY - ty) < 60) {
+    const b = document.querySelector('.back');
+    if (b) b.click();
+    else if (!['map', 'start'].includes(route) && S.onboarded) go('map');
+  }
+  tx = null;
+}, { passive: true });
 
 // ——— запуск ———
 function boot() {

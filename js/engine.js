@@ -55,8 +55,11 @@ export function evaluateVisit(gapDays) {
   w.pending = null;
   const m = mood();
   if (m === 'safety') { w.pending = { type: 'safety', date: t }; return; }
+  const freq = S.settings.witchFreq || 'auto';
+  if (freq === 'call') return; // приходит только когда позовут (кроме заботы о безопасности выше)
+  const rare = freq === 'rare';
   if (gapDays >= 3 && S.steps.length + Object.keys(S.days).length > 0) { w.pending = makeVisit('back'); return; }
-  if (w.lastVisit && daysBetween(w.lastVisit, t) < 5) return;
+  if (w.lastVisit && daysBetween(w.lastVisit, t) < (rare ? 14 : 5)) return;
   if (daysBetween(S.created, t) < 2) return;
 
   const ev = evenings(30);
@@ -83,7 +86,7 @@ export function evaluateVisit(gapDays) {
   const echo = echoCandidate();
   if (echo && Math.random() < 0.5) { w.pending = { ...makeVisit('echo'), echo }; return; }
   const since = w.lastVisit || S.created;
-  if (daysBetween(since, t) >= 10 || (!w.lastVisit && daysBetween(S.created, t) >= 3)) {
+  if (daysBetween(since, t) >= (rare ? 21 : 10) || (!w.lastVisit && daysBetween(S.created, t) >= 3)) {
     w.pending = makeVisit('random', { card: Math.random() < 0.5 });
   }
 }
@@ -101,6 +104,14 @@ function goldTrigger() {
 function echoCandidate() {
   const t = dayKey();
   return S.journal.find((j) => j.kind === 'witch' && j.answer && daysBetween(j.date, t) >= 21 && !S.witch.echoed.includes(j.id)) || null;
+}
+
+// Позвать Странствующую самой
+export function callWitch() {
+  const m = mood();
+  const type = m === 'down' ? 'low' : 'random';
+  S.witch.pending = makeVisit(type, { card: Math.random() < 0.4, called: true });
+  return S.witch.pending;
 }
 
 // ——— колода ———

@@ -14,7 +14,7 @@ export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function blank() {
   return {
-    v: 1,
+    v: 2,
     created: dayKey(),
     lastActive: null,
     hero: 'f',
@@ -28,11 +28,12 @@ export function blank() {
     journal: [],
     treasury: { mode: 0, hideSums: false, chests: [], wallet: null, spends: [], regular: [] },
     seen: {},
+    seenStitches: {},
     spells: [],
     witch: { lastVisit: null, pending: null, lastCard: null, history: [], echoed: [] },
     threads: { decided: {}, list: [] },
     chapters: [],
-    settings: { morning: '08:30', evening: '21:30', backupRemind: true, lastBackup: null }
+    settings: { morning: '08:30', evening: '21:30', backupRemind: true, lastBackup: null, witchFreq: 'auto' }
   };
 }
 
@@ -44,6 +45,13 @@ function migrate(o) {
   o.treasury = Object.assign(blank().treasury, o.treasury);
   o.settings = Object.assign(blank().settings, o.settings);
   o.seen = o.seen || {};
+  o.seenStitches = o.seenStitches || {};
+  o.settings.witchFreq = o.settings.witchFreq || 'auto';
+  // v2: в частоты добавлены «1×/мес» и «2×/мес» — сдвигаем старые индексы
+  if ((o.v || 1) < 2) {
+    for (const l of o.lands || []) for (const p of l.patterns || []) if (p.freq >= 1) p.freq += 2;
+    o.v = 2;
+  }
   // заклинания: строка → { what, amount, unit }
   for (const sp of o.spells || []) {
     for (const k of ['small', 'great']) if (typeof sp[k] === 'string') sp[k] = { what: sp[k], amount: '', unit: '' };
