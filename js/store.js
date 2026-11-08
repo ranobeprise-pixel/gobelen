@@ -26,7 +26,7 @@ export function blank() {
     days: {},
     steps: [],
     journal: [],
-    treasury: { mode: 0, hideSums: false, chests: [], wallet: null, spends: [], regular: [] },
+    treasury: { mode: 0, hideSums: false, chests: [], wallet: null, spends: [], regular: [], envelopes: [], currency: '₽' },
     seen: {},
     seenStitches: {},
     spells: [],
@@ -144,4 +144,5 @@ export function applyRegular() {
   }
   return added;
 }
-export const money = (n) => Math.round(n).toLocaleString('ru-RU') + ' ₽';
+export const cur = () => S.treasury.currency || '₽';
+export const money = (n) => Math.round(n).toLocaleString('ru-RU') + ' ' + cur();

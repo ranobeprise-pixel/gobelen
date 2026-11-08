@@ -1,6 +1,6 @@
-import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING } from './data.js';
+import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING, OWN_GOALS } from './data.js';
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
-  weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, replaceAll, resetAll } from './store.js';
+  weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, cur, replaceAll, resetAll } from './store.js';
 import { g, mood, weekMoonLabel, evaluateVisit, cardName, cardImg, cardQs, drawCard, canAskCard, nextCardDay,
   detectThreads, threadFact, chapterDue, rangeStats, callWitch } from './engine.js';
 
@@ -109,6 +109,7 @@ function HINTS() {
     treasury: ['Как устроена сокровищница', [
       '<b>Сундуки</b> — накопления на цели: подушка, поездка, учёба. Это не ежемесячные конверты: деньги лежат в сундуке, пока ты сама не решишь их взять. Нажми на сундук, чтобы положить или взять.',
       'Каждая трата получает один из трёх видов: <b>Провизия</b> — необходимое и регулярное: аренда, продукты, проезд, связь. <b>Снаряжение</b> — то, что ты ценишь и во что вкладываешься. <b>Рассыпано</b> — на автопилоте или «не помню на что».',
+      '<b>Конверты</b> — сколько ты разрешаешь себе потратить на что-то за месяц: кафе, такси. Выбираешь конверт при записи траты и видишь, сколько осталось. Каждый месяц конверты наполняются заново.',
       '<b>Постоянные траты</b> (аренда, подписки) можно завести один раз — они сами запишутся как провизия в свой день месяца.',
       '<b>Кошель</b> — сколько денег у тебя на руках. Сверь его: приложение запомнит сумму и дальше будет вычитать траты. Если при следующей сверке денег меньше, разница уйдёт в «рассыпано» — без упрёков.']],
     spells: ['Как устроены заклинания', [
@@ -301,6 +302,7 @@ SCR.tsetup = () => {
     if (edit) ui.chests = S.treasury.chests.map((c) => ({ ...c, on: true }));
     else ui.chests = chestSuggestions(ob.picked).map(([name, why]) => ({ id: uid(), name, why, goal: '', saved: 0, on: true }));
     ui.mode = edit ? S.treasury.mode : 0;
+    ui.cur = S.treasury.currency || '₽';
     if (edit) for (const [name, why] of chestSuggestions(activeLands().map((l) => l.id))) if (!ui.chests.some((c) => c.name === name)) ui.chests.push({ id: uid(), name, why, goal: '', saved: 0, on: false });
   }
   const modes = [['Вношу сама|Вношу сам', 'каждую трату, в пару касаний'], ['Сверяю кошель', 'раз в неделю; что не учтено — рассыпанные монеты']];
@@ -316,10 +318,11 @@ SCR.tsetup = () => {
         <span aria-hidden="true" style="flex:0 0 24px;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;${c.on ? 'background:#E8B04A;color:#2A1D12' : 'border:1.5px solid #8A6E52'}">${c.on ? '✓' : ''}</span>
         <span class="col" style="gap:0"><span style="font-size:17px;font-weight:700">${esc(c.name)}</span>${c.why ? `<span style="font-size:13px;color:#C9B49A">${esc(c.why)}</span>` : ''}</span>
       </button>
-      ${c.on ? `<input class="field" style="height:40px" inputmode="numeric" data-m="chest.${i}" value="${c.goal ? esc(c.goal) : ''}" aria-label="Цель для сундука ${esc(c.name)}" placeholder="цель, ₽ — можно оставить пустым">` : ''}
+      ${c.on ? `<input class="field" style="height:40px" inputmode="numeric" data-m="chest.${i}" value="${c.goal ? esc(c.goal) : ''}" aria-label="Цель для сундука ${esc(c.name)}" placeholder="цель, ${cur()} — можно оставить пустым">` : ''}
     </div>`).join('')}
     <div class="row"><input class="field grow" style="height:44px" data-m="ui.newChest" value="${esc(ui.newChest || '')}" placeholder="Свой сундук, например: новый ноутбук"><button class="btn amber" style="width:auto;min-height:44px" data-a="chestAdd">Добавить</button></div>
   </div>
+  <div class="row" style="justify-content:space-between"><span class="lbl">Валюта</span><div class="row" style="gap:6px">${['₽', '$', '€'].map((c) => `<button class="tile ${ui.cur === c ? 'on' : ''}" style="width:52px;min-height:40px;font-size:18px" data-a="setCur" data-v="${c}" aria-pressed="${ui.cur === c}">${c}</button>`).join('')}</div></div>
   <div class="col" style="gap:6px"><span class="lbl">Как будешь вести траты?</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
     ${modes.map((m, i) => `<button data-a="tmode" data-v="${i}" aria-pressed="${ui.mode === i}" style="min-height:84px;padding:10px;border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:4px;${ui.mode === i ? 'background:#E8B04A;color:#2A1D12;border:1px solid #E8B04A' : 'background:transparent;color:#F3E7CF;border:1px solid #5C4632'}"><span style="font-size:15px;font-weight:700">${i === 0 ? w('Вношу сама', 'Вношу сам') : m[0]}</span><span style="font-size:13px;opacity:.85">${m[1]}</span></button>`).join('')}
@@ -391,7 +394,7 @@ function goalCard(l) {
   const td = today();
   const muted = 'color:#B9AECB';
   if (ui.goalForm) {
-    const ex = landDef(l.id)?.goals || [];
+    const ex = landDef(l.id)?.goals || OWN_GOALS;
     const L = (letter, title, q) => `<span class="row" style="gap:8px;align-items:baseline"><b style="flex:0 0 22px;height:22px;border-radius:6px;background:var(--moon);color:#1E1530;display:inline-flex;align-items:center;justify-content:center;font-size:13px">${letter}</b><span style="font-size:15px"><b>${title}</b> <span style="${muted}">· ${q}</span></span></span>`;
     return `<div class="col" style="gap:10px;padding:14px;border-radius:14px;background:rgba(255,255,255,.07)">
       <span style="font-size:17px;color:var(--moon)">Цель для этой земли</span>
@@ -452,6 +455,10 @@ SCR.land = () => {
     ${own?.leads ? `<p style="margin:0;font-size:14px;line-height:1.4;color:#D9D0E8">${esc(own.leads)}</p>` : ''}
     ${hint('land')}
     ${goalCard(l)}
+    ${(l.goalHistory || []).length ? `<div class="col" style="gap:4px">
+      <button data-a="toggle" data-k="histOpen" aria-expanded="${!!ui.histOpen}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#D9D0E8;text-align:left;min-height:32px"><span style="font-size:15px">Прошлые цели · достигнуто ${l.goalHistory.filter((x) => x.status === 'done').length} из ${l.goalHistory.length}</span><span style="font-size:13px">${ui.histOpen ? '▴' : '▾'}</span></button>
+      ${ui.histOpen ? [...l.goalHistory].reverse().map((x) => `<div class="row" style="align-items:flex-start;font-size:14px;line-height:1.35;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05)"><span style="color:${x.status === 'done' ? 'var(--moon)' : '#B9AECB'}">${x.status === 'done' ? '✓' : '○'}</span><span class="col grow" style="gap:0"><span>${esc(x.text)}</span><span style="font-size:12px;color:#B9AECB">${x.status === 'done' ? 'достигнута' : 'отпущена'} ${fmtDay(x.closedAt)}${x.target ? ` · ${x.current} из ${x.target} ${esc(x.unit || '')}` : ''}</span></span></div>`).join('') : ''}
+    </div>` : ''}
     <div class="col" style="gap:4px"><div class="prog" role="img" aria-label="Вышито ${pct} процентов" style="background:rgba(255,255,255,.08)"><div style="width:${pct}%"></div></div>
     <span style="font-size:13px;color:#B9AECB">Вовлечённость: ${stitchW(l.stitches)} из ${l.target} — примерно 6 недель по твоему плану узоров</span></div>
     ${p >= 1 ? `<button class="btn moon" data-a="go" data-to="complete" data-id="${l.id}">Земля вышита — что дальше?</button>` : ''}
@@ -683,30 +690,50 @@ SCR.treasury = () => {
         return `<button data-a="chestOpen" data-id="${c.id}" style="display:flex;flex-direction:column;gap:3px;background:none;border:none;padding:0;text-align:left;color:inherit">
           <span class="row" style="justify-content:space-between;width:100%;font-size:15px"><span>${esc(c.name)}</span><span style="color:#E8C27A">${val}</span></span>
           <span class="prog" role="img" aria-label="${esc(c.name)}" style="display:block;width:100%"><span style="display:block;height:100%;width:${pct ?? (c.saved ? 100 : 0)}%;background:repeating-linear-gradient(90deg,#E8B04A 0 6px,#C98E2E 6px 8px)"></span></span></button>
-          ${ui.chest === c.id ? `<div class="row"><input class="field grow" style="height:44px" inputmode="numeric" data-m="ui.chestAmt" placeholder="₽" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div>` : ''}`;
+          ${ui.chest === c.id ? `<div class="row"><input class="field grow" style="height:44px" inputmode="numeric" data-m="ui.chestAmt" placeholder="${cur()}" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div>` : ''}`;
       }).join('') : '<p class="sub">Сундуков пока нет. Их можно завести в Котомке.</p>'}
     </div>
+    ${(() => {
+      const ym = today().slice(0, 7);
+      const envs = T.envelopes || [];
+      return `<button data-a="toggle" data-k="envHelp" aria-expanded="${!!ui.envHelp}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#E8C27A;text-align:left;min-height:32px;border-top:1px solid #4A3626;padding-top:10px"><span style="font-size:16px">Конверты на месяц</span><span style="font-size:13px;color:#C9B49A">${ui.envHelp ? 'скрыть ▴' : 'что это? ▾'}</span></button>
+      ${ui.envHelp ? `<p style="margin:0;font-size:14px;line-height:1.4;color:#D8C7AC">Конверт — сколько ты разрешаешь себе потратить на что-то за месяц: кафе, такси, одежду. Записывая трату, выбери конверт — и увидишь, сколько в нём осталось. Первого числа каждый конверт наполняется заново.</p>` : ''}
+      ${envs.map((e) => {
+        const spent = T.spends.filter((x) => x.envId === e.id && x.date.slice(0, 7) === ym).reduce((a, x) => a + x.amount, 0);
+        const left = e.limit - spent;
+        const pct = e.limit ? Math.min(100, Math.round((spent / e.limit) * 100)) : 0;
+        const over = left < 0;
+        return `<div class="col" style="gap:3px">
+          <div class="row" style="justify-content:space-between;font-size:15px"><span>${esc(e.name)}</span><span class="row" style="gap:2px"><span style="color:${over ? '#F0A07A' : '#E8C27A'}">${hide ? pct + '%' : over ? `сверх на ${money(-left)}` : `осталось ${money(left)}`}</span>${ui.envEdit ? `<button data-a="envDel" data-id="${e.id}" aria-label="Убрать конверт" style="width:30px;height:30px;border:none;background:none;color:#C9B49A">${I.x}</button>` : ''}</span></div>
+          <span class="prog" style="display:block"><span style="display:block;height:100%;width:${pct}%;background:${over ? '#C0603A' : 'repeating-linear-gradient(90deg,#A88C6A 0 6px,#8A7050 6px 8px)'}"></span></span>
+          <span style="font-size:12px;color:#C9B49A">${hide ? '' : `потрачено ${money(spent)} из ${money(e.limit)}`}</span></div>`;
+      }).join('')}
+      ${ui.envAdd ? `<div class="row"><input class="field grow" style="height:42px" data-m="ui.envName" value="${esc(ui.envName || '')}" placeholder="на что: кафе"><input class="field" style="height:42px;width:110px" inputmode="decimal" data-m="ui.envLimit" value="${esc(ui.envLimit || '')}" placeholder="в месяц"></div>
+        <div class="row"><button class="btn amber" style="min-height:42px;font-size:15px" data-a="envAdd">Завести конверт</button><button class="btn ghost" style="min-height:42px;font-size:15px;width:auto" data-a="toggle" data-k="envAdd">Отмена</button></div>`
+      : `<div class="row" style="gap:14px"><button class="link" style="padding:2px 0;font-size:14px" data-a="toggle" data-k="envAdd">+ Новый конверт</button>${envs.length ? `<button class="link" style="padding:2px 0;font-size:14px" data-a="toggle" data-k="envEdit">${ui.envEdit ? 'готово' : 'изменить'}</button>` : ''}</div>`}`;
+    })()}
     ${T.wallet !== null ? `<div class="row ${ui.flash === 'wallet' ? 'flash' : ''}" style="justify-content:space-between;font-size:15px;padding:6px 8px;margin:0 -8px;border-radius:8px"><span>В кошеле${ui.flash === 'wallet' ? ' · запомнила' : ''}</span><span style="color:#E8C27A">${hide ? '•••' : money(T.wallet)}</span></div>` : ''}
     <div class="col" style="gap:8px;border-top:1px solid #4A3626;padding-top:10px">
       <span class="lbl">Новая трата</span>
       <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px">
-        <input class="field" style="height:44px" inputmode="decimal" aria-label="Сумма" data-m="ui.amt" value="${esc(ui.amt || '')}" placeholder="₽">
+        <input class="field" style="height:44px" inputmode="decimal" aria-label="Сумма" data-m="ui.amt" value="${esc(ui.amt || '')}" placeholder="${cur()}">
         <input class="field" style="height:44px" aria-label="На что" data-m="ui.what" value="${esc(ui.what || '')}" placeholder="на что (необязательно)"></div>
       <div class="seg" style="grid-template-columns:repeat(3,minmax(0,1fr))">${TAGS.map((t, i) => `<button class="tile ${ui.tag === i ? 'on' : ''}" style="min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px" data-a="set" data-k="tag" data-v="${i}" aria-pressed="${ui.tag === i}"><span style="font-size:15px;font-weight:700">${t[0]}</span><span style="font-size:12px;opacity:.85">${t[1]}</span></button>`).join('')}</div>
+      ${(T.envelopes || []).length ? `<div class="row" style="flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:13px;color:#C9B49A">из конверта:</span>${T.envelopes.map((e) => `<button class="chip ${ui.env === e.id ? 'on' : ''}" style="min-height:34px;font-size:13px;border-color:#5C4632;${ui.env === e.id ? 'background:#E8B04A;color:#2A1D12;border-color:#E8B04A' : ''}" data-a="setS" data-k="env" data-v="${e.id}">${esc(e.name)}</button>`).join('')}</div>` : ''}
       <button class="btn amber" style="min-height:46px" data-a="spendAdd">Записать трату</button>
     </div>
     <div class="box col" style="gap:8px;padding:10px 12px">
-      ${ui.checking ? `<label class="row" style="font-size:14px;color:#D8C7AC">${T.wallet === null ? 'Сколько сейчас в кошеле?' : 'Сколько в кошеле на самом деле?'}<input class="field grow" style="height:40px" inputmode="decimal" data-m="ui.real" placeholder="₽"></label>
+      ${ui.checking ? `<label class="row" style="font-size:14px;color:#D8C7AC">${T.wallet === null ? 'Сколько сейчас в кошеле?' : 'Сколько в кошеле на самом деле?'}<input class="field grow" style="height:40px" inputmode="decimal" data-m="ui.real" placeholder="${cur()}"></label>
         <span style="font-size:14px;line-height:1.3">${T.wallet === null ? 'Запомню эту сумму. Дальше траты будут вычитаться из неё.' : 'Разница уйдёт в «Рассыпано по дороге» с пометкой «не помню на что». Без упрёков.'}</span>
         <div class="row"><button class="btn amber" style="min-height:42px;font-size:15px" data-a="walletCheck">Сверить</button><button class="btn ghost" style="min-height:42px;font-size:15px" data-a="toggle" data-k="checking">Отмена</button></div>`
       : `<div class="row" style="justify-content:space-between"><span style="font-size:14px;line-height:1.3;color:#D8C7AC">${T.wallet === null ? 'Хочешь, чтобы я помнила, сколько в кошеле?' : 'Монет меньше, чем помнишь? Не помнишь, на что ушли?'}</span><button class="btn ghost" style="width:auto;min-height:40px;font-size:14px" data-a="toggle" data-k="checking">Сверить кошель</button></div>
-        ${T.wallet !== null ? `${ui.income ? `<div class="row"><input class="field grow" style="height:40px" inputmode="decimal" data-m="ui.inc" placeholder="₽"><button class="btn amber" style="width:auto;min-height:40px;font-size:14px" data-a="incomeAdd">Положить в кошель</button></div>` : `<button class="link" style="align-self:flex-start;padding:2px 0;font-size:14px" data-a="toggle" data-k="income">+ Пришли монеты</button>`}` : ''}`}
+        ${T.wallet !== null ? `${ui.income ? `<div class="row"><input class="field grow" style="height:40px" inputmode="decimal" data-m="ui.inc" placeholder="${cur()}"><button class="btn amber" style="width:auto;min-height:40px;font-size:14px" data-a="incomeAdd">Положить в кошель</button></div>` : `<button class="link" style="align-self:flex-start;padding:2px 0;font-size:14px" data-a="toggle" data-k="income">+ Пришли монеты</button>`}` : ''}`}
     </div>
     <div class="box col" style="gap:8px;padding:10px 12px">
       <button data-a="toggle" data-k="regOpen" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:inherit;text-align:left;min-height:32px"><span class="col" style="gap:0"><span style="font-size:15px;font-weight:700">Постоянные траты${T.regular.length ? ` · ${T.regular.length}` : ''}</span><span style="font-size:13px;color:#C9B49A">аренда, связь, подписки — запишутся сами как провизия</span></span><span style="font-size:20px">${ui.regOpen ? '−' : '+'}</span></button>
       ${ui.regOpen ? `${T.regular.map((r) => `<div class="row" style="font-size:14px;justify-content:space-between"><span class="grow">${esc(r.name)} · ${r.day} числа</span><span>${hide ? '•••' : money(r.amount)}</span><button data-a="regDel" data-id="${r.id}" aria-label="Убрать постоянную трату" style="width:32px;height:32px;border:none;background:none;color:#C9B49A">${I.x}</button></div>`).join('')}
         <input class="field" style="height:42px" data-m="ui.regName" value="${esc(ui.regName || '')}" placeholder="Что это, например: аренда">
-        <div class="row"><input class="field grow" style="height:42px" inputmode="decimal" data-m="ui.regAmt" value="${esc(ui.regAmt || '')}" placeholder="сумма, ₽"><input class="field" style="height:42px;width:110px" inputmode="numeric" data-m="ui.regDay" value="${esc(ui.regDay || '')}" placeholder="число"></div>
+        <div class="row"><input class="field grow" style="height:42px" inputmode="decimal" data-m="ui.regAmt" value="${esc(ui.regAmt || '')}" placeholder="сумма, ${cur()}"><input class="field" style="height:42px;width:110px" inputmode="numeric" data-m="ui.regDay" value="${esc(ui.regDay || '')}" placeholder="число"></div>
         <button class="btn amber" style="min-height:42px;font-size:15px" data-a="regAdd">Добавить постоянную трату</button>
         <span style="font-size:13px;color:#C9B49A">Первая запись появится в ближайшее указанное число. То, что уже оплачено в этом месяце, не задвоится.</span>` : ''}
     </div>
@@ -1134,7 +1161,8 @@ A.chestToggle = (d) => { const c = ui.chests[Number(d.i)]; c.on = !c.on; render(
 A.chestAdd = () => { const n = (ui.newChest || '').trim(); if (!n) return; ui.chests.push({ id: uid(), name: n, why: '', goal: '', saved: 0, on: true }); ui.newChest = ''; render(); };
 A.tmode = (d) => { ui.mode = Number(d.v); render(); };
 const cleanChests = () => ui.chests.filter((c) => c.on).map(({ id, name, why, goal, saved }) => ({ id, name, why, goal: Number(String(goal).replace(/\s/g, '')) || 0, saved: saved || 0 }));
-A.tsetupSave = () => { S.treasury.chests = cleanChests(); S.treasury.mode = ui.mode; save(); toast('Сундуки на месте'); go('treasury'); };
+A.setCur = (d) => { ui.cur = d.v; render(); };
+A.tsetupSave = () => { S.treasury.chests = cleanChests(); S.treasury.mode = ui.mode; S.treasury.currency = ui.cur; save(); toast('Сундуки на месте'); go('treasury'); };
 A.obFinish = () => {
   const td = today();
   S.hero = ob.hero; S.name = (ob.name || '').trim();
@@ -1143,7 +1171,7 @@ A.obFinish = () => {
     const own = ob.customs.find((c) => c.id === id);
     return { id, customName: own ? own.name : null, art: own ? own.art : null, slot: i, tier: 1, stitches: 0, target: tierTarget(patterns), patterns, since: td, status: 'active' };
   });
-  S.treasury.chests = cleanChests(); S.treasury.mode = ui.mode;
+  S.treasury.chests = cleanChests(); S.treasury.mode = ui.mode; S.treasury.currency = ui.cur;
   S.onboarded = true; S.created = td; S.firstDaySeen = false;
   save(); ob = null;
   go('map');
@@ -1201,7 +1229,7 @@ A.stepUndo = (d) => {
 };
 const curLand = () => landOf(P.id);
 A.goalOpen = () => { Object.assign(ui, { goalForm: true, gText: '', gTarget: '', gUnit: '', gWhy: '', gMonths: 3, focus: 'gText' }); render(); };
-A.goalEx = (d) => { ui.gText = (landDef(P.id)?.goals || [])[Number(d.i)] || ''; const m = ui.gText.match(/(\d+)\s+([а-яё]+)/i); if (m && !ui.gTarget) { ui.gTarget = m[1]; ui.gUnit = m[2]; } render(); };
+A.goalEx = (d) => { ui.gText = (landDef(P.id)?.goals || OWN_GOALS)[Number(d.i)] || ''; const m = ui.gText.match(/(\d+)\s+([а-яё]+)/i); if (m && !ui.gTarget) { ui.gTarget = m[1]; ui.gUnit = m[2]; } render(); };
 A.goalSave = () => {
   const text = (ui.gText || '').trim();
   if (!text) return toast('Что именно хочешь? Одной фразой');
@@ -1211,8 +1239,12 @@ A.goalSave = () => {
   S.journal.push({ id: uid(), kind: 'land', date: today(), text: `${landName(l)}: новая цель — ${text}` });
   save(); ui.goalForm = false; toast('Цель поставлена'); render();
 };
+function archiveGoal(l, status) {
+  (l.goalHistory ||= []).push({ ...l.goal, status, closedAt: today() });
+}
 function goalReached(l) {
   l.goal.doneAt = today();
+  archiveGoal(l, 'done');
   S.journal.push({ id: uid(), kind: 'land', date: today(), text: `${landName(l)}: цель достигнута — ${l.goal.text}` });
   toast('Цель достигнута! Это твоя победа');
 }
@@ -1225,7 +1257,7 @@ A.goalStep = (d) => {
 A.goalDone = () => { goalReached(curLand()); save(); flash('goal'); };
 A.goalExtend = () => { const g0 = curLand().goal; const d = parseDay(today()); d.setMonth(d.getMonth() + 1); g0.due = dayKey(d); save(); toast('Срок продлён на месяц'); render(); };
 A.goalEdit = () => { const g0 = curLand().goal; Object.assign(ui, { goalForm: true, gText: g0.doneAt ? '' : g0.text, gTarget: g0.doneAt ? '' : (g0.target || ''), gUnit: g0.doneAt ? '' : g0.unit, gWhy: g0.doneAt ? '' : g0.why, gMonths: 3 }); render(); };
-A.goalDrop = () => { const l = curLand(); S.journal.push({ id: uid(), kind: 'land', date: today(), text: `${landName(l)}: цель отпущена — ${l.goal.text}` }); l.goal = null; save(); toast('Цель отпущена. Это тоже решение'); render(); };
+A.goalDrop = () => { const l = curLand(); if (!l.goal.doneAt) archiveGoal(l, 'dropped'); S.journal.push({ id: uid(), kind: 'land', date: today(), text: `${landName(l)}: цель отпущена — ${l.goal.text}` }); l.goal = null; save(); toast('Цель отпущена. Это тоже решение'); render(); };
 A.landGrow = (d) => {
   const l = landOf(d.id);
   l.tier += 1; l.stitches = 0; l.doneSeen = false; l.target = tierTarget(l.patterns);
@@ -1323,10 +1355,13 @@ A.chestMove = (d) => {
 A.spendAdd = () => {
   const a = num(ui.amt);
   if (!a) return toast('Сколько потрачено?');
-  S.treasury.spends.push({ id: uid(), date: today(), amount: a, note: (ui.what || '').trim(), tag: ui.tag });
+  const env = (S.treasury.envelopes || []).find((e) => e.id === ui.env);
+  S.treasury.spends.push({ id: uid(), date: today(), amount: a, note: (ui.what || '').trim() || (env ? env.name : ''), tag: ui.tag, envId: env ? env.id : null });
   if (S.treasury.wallet !== null) S.treasury.wallet -= a;
-  save(); ui.amt = ''; ui.what = '';
-  toast(`Записано: ${TAGS[ui.tag][0].toLowerCase()}, ${money(a)}`);
+  save(); ui.amt = ''; ui.what = ''; ui.env = null;
+  let msg = `Записано: ${TAGS[ui.tag][0].toLowerCase()}, ${money(a)}`;
+  if (env) { const ym = today().slice(0, 7); const left = env.limit - S.treasury.spends.filter((x) => x.envId === env.id && x.date.slice(0, 7) === ym).reduce((q, x) => q + x.amount, 0); msg += left >= 0 ? ` · в конверте «${env.name}» осталось ${money(left)}` : ` · конверт «${env.name}» превышен на ${money(-left)}`; }
+  toast(msg);
   if (S.treasury.wallet !== null) flash('wallet'); else render();
 };
 A.spendDel = (d) => {
@@ -1358,6 +1393,13 @@ A.regAdd = () => {
   ui.regName = ''; ui.regAmt = ''; ui.regDay = '';
   toast(`«${name}» будет записываться ${day} числа`); render();
 };
+A.envAdd = () => {
+  const name = (ui.envName || '').trim(), limit = num(ui.envLimit);
+  if (!name || !limit) return toast('Нужны название и сумма на месяц');
+  (S.treasury.envelopes ||= []).push({ id: uid(), name, limit });
+  save(); ui.envAdd = false; ui.envName = ''; ui.envLimit = ''; toast(`Конверт «${name}» заведён`); render();
+};
+A.envDel = (d) => { S.treasury.envelopes = S.treasury.envelopes.filter((e) => e.id !== d.id); save(); render(); };
 A.regDel = (d) => { S.treasury.regular = S.treasury.regular.filter((r) => r.id !== d.id); save(); render(); };
 A.incomeAdd = () => { const a = num(ui.inc); if (!a) return; S.treasury.wallet += a; save(); ui.income = false; ui.inc = ''; toast(`+${money(a)} в кошеле`); flash('wallet'); };
 
