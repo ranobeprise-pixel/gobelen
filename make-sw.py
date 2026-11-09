@@ -11,7 +11,7 @@ for root, dirs, fs in os.walk('.'):
         continue
     for f in sorted(fs):
         p = os.path.join(root, f)[2:]
-        if p in SKIP or p.startswith('.'):
+        if p in SKIP or p.startswith('.') or p.startswith('psy/'):
             continue
         if p not in files:
             files.append(p)

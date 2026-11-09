@@ -8,7 +8,7 @@ import { g, mood, weekMoonLabel, evaluateVisit, cardName, cardImg, cardQs, drawC
 
 const $app = document.getElementById('app');
 const APP_URL = location.origin + location.pathname;
-const PSY_LINK = 'https://t.me/linapsyc';
+const PSY_LINK = 'https://ranobeprise-pixel.github.io/gobelen/psy/';
 
 // ——— утилиты ———
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1162,7 +1162,7 @@ SCR.safety = () => `
         <span style="font-size:17px;font-weight:700">Написать близкому человеку</span><span style="font-size:14px">другу, родным — тому, кому захочется</span></button>
       ${ui.friend ? `<div role="status" class="box col" style="gap:6px;border-color:var(--gold)"><span class="goth" style="font-size:20px;color:var(--gold)">Привал души</span><span style="font-size:16px;line-height:1.4;color:#E9DFF0">Общение с близкими — это привал души. Рядом с тобой всегда есть кто-то, кто поможет.</span></div>` : ''}
       <a href="${PSY_LINK}" target="_blank" rel="noopener" style="min-height:56px;padding:8px 16px;border-radius:12px;border:1px solid var(--nline);background:var(--night2);display:flex;flex-direction:column;justify-content:center">
-        <span style="font-size:17px;font-weight:700">Обратиться к специалисту</span><span style="font-size:14px;color:#C9C3D6">Полина, психолог · @linapsyc в Telegram</span></a>
+        <span style="font-size:17px;font-weight:700">Обратиться к специалисту</span><span style="font-size:14px;color:#C9C3D6">Полина, психолог · сайт и запись</span></a>
     </div>
     <button class="link mt-auto" style="color:#C9C3D6;font-size:16px" data-a="safetyBack">Мне немного легче, вернуться к карте</button>
   </div>

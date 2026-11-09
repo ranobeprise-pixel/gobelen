@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Полина Окоемова, психолог и бизнес-тренер. Онлайн-консультации, 55 минут.">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<title>Полина, психолог</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata&family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+/* Layout: split hero on her red-wall photo, then quiet single-column reading sections; red used once, boldly, in the hero band */
+:root{
+  --paper:#EFF0EE; --ink:#18191C; --muted:#5D6067; --line:#D6D8D4;
+  --red:#C9281C; --on-red:#FFF6F2; --card:#F8F8F6;
+  --display:"Prata",Georgia,"Times New Roman",serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#141517; --ink:#ECEBE8; --muted:#A3A6AC; --line:#2C2E33;
+  --red:#B8261B; --on-red:#FFF1EC; --card:#1C1D20; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#141517; --ink:#ECEBE8; --muted:#A3A6AC; --line:#2C2E33;
+  --red:#B8261B; --on-red:#FFF1EC; --card:#1C1D20; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:400 17px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
+p{margin:0}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:4px}
+
+/* hero */
+.hero{background:var(--red);color:var(--on-red)}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:end;padding-block:56px 0}
+.hero-text{display:flex;flex-direction:column;gap:20px;padding-bottom:56px;min-width:0}
+.eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.hero h1{font-size:clamp(44px,7vw,80px);line-height:1}
+.hero .lead{font-size:20px;line-height:1.5;max-width:30ch}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.btn{display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;font-weight:600;font-size:16px;text-decoration:none;border:1.5px solid var(--on-red)}
+.btn.solid{background:var(--on-red);color:var(--red)}
+.btn.ghost{color:var(--on-red)}
+.hero img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:220px 220px 0 0}
+
+/* sections */
+section{padding-block:72px;border-bottom:1px solid var(--line)}
+.sec{display:grid;grid-template-columns:220px 1fr;gap:40px}
+.sec>*{min-width:0}
+.sec h2{font-size:30px;line-height:1.2}
+.prose{display:flex;flex-direction:column;gap:16px;max-width:62ch}
+.muted{color:var(--muted)}
+.reqs{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.reqs li{padding:18px 0;border-top:1px solid var(--line);font-size:19px;line-height:1.45}
+.reqs li:last-child{border-bottom:1px solid var(--line)}
+.reqs small{display:block;color:var(--muted);font-size:15px;margin-top:4px}
+
+.about{display:grid;grid-template-columns:1fr 300px;gap:40px;align-items:start}
+.about img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px}
+.facts{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:14px}
+.facts li{display:grid;grid-template-columns:76px 1fr;gap:16px}
+.facts b{font-weight:600;font-variant-numeric:tabular-nums;color:var(--red)}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center}
+.duo img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:6px}
+
+.price{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:8px}
+.pcard h3{font-size:22px}
+.pcard .sum{font-size:26px;font-family:var(--display)}
+.rules{grid-column:1/-1;font-size:15px;color:var(--muted)}
+
+.quote{margin:8px 0;padding:4px 0 4px 20px;border-left:3px solid var(--red);display:flex;flex-direction:column;gap:8px}
+.quote h3{font-family:var(--body);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
+.quote p{font-family:var(--display);font-size:21px;line-height:1.45}
+.reviews{display:flex;flex-direction:column;gap:32px;max-width:62ch}
+
+.cta{background:var(--card)}
+.cta .box{display:flex;flex-direction:column;gap:18px;max-width:640px}
+.cta .btn.solid{background:var(--red);color:var(--on-red);border-color:var(--red);align-self:flex-start}
+.handle{font-weight:600;user-select:all}
+.note{font-size:14px;color:var(--muted)}
+footer{padding-block:32px;font-size:14px;color:var(--muted)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+
+@media (max-width:760px){
+  .hero .wrap{grid-template-columns:1fr;gap:28px;padding-top:32px}
+  .hero .ph{order:-1;max-width:340px}
+  .hero-text{padding-bottom:40px}
+  .sec,.about,.duo,.price{grid-template-columns:1fr;gap:24px}
+  .about img{max-width:320px}
+  section{padding-block:52px}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-text">
+      <div class="eyebrow">Психолог · бизнес-тренер · Санкт-Петербург</div>
+      <h1>Полина Окоемова</h1>
+      <p class="lead">Помогаю понять, чего вы на самом деле хотите, и по-другому посмотреть на свою жизнь. Без оценок и без спешки.</p>
+      <div class="btns">
+        <a class="btn solid" href="#zapis">Записаться</a>
+        <a class="btn ghost" href="https://ranobeprise-pixel.github.io/gobelen/">Гобелен пути</a>
+      </div>
+    </div>
+    <div class="ph"><img src="img/hero.jpg" alt="Полина сидит на красной скамье у красной стены"></div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap sec">
+      <h2>С чем приходят</h2>
+      <ul class="reqs">
+        <li>Не понимаю, чего хочу<small>Желания спутались с «надо» и чужими ожиданиями.</small></li>
+        <li>Знаю, чего хочу, но не начинаю<small>Разберём, что держит, и найдём первый посильный шаг.</small></li>
+        <li>Отношения<small>С близкими, партнёром, коллегами и с собой.</small></li>
+        <li>Рутина, которая съедает<small>Дни похожи друг на друга. Вместе смотрим на неё прямо и ищем, где в ней жизнь и силы.</small></li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap sec">
+      <h2>Как я работаю</h2>
+      <div class="prose">
+        <p>Я работаю в экзистенциально-гуманистическом подходе. В центре внимания ваша жизнь как она есть: выборы, ценности, свобода и ответственность за свой путь.</p>
+        <p>Я не ставлю диагнозов и не даю готовых рецептов. Моя задача — помочь вам лучше чувствовать свою жизнь и опираться на то, что для вас действительно важно.</p>
+        <p class="muted">Работаю онлайн. Сессия длится 55 минут.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap about">
+      <div class="prose">
+        <h2>Обо мне</h2>
+        <p>Я училась психологии в Герцена, в стенах которого зарождались отечественная психология и педагогика. Первую настоящую практику прошла на горячей линии фонда «Просто люди». Порой были сложные истории, но именно там я поняла: передо мной просто люди.</p>
+        <p>С 2024 года работаю в бизнесе: разрабатываю тренинги, провожу обучение, нередко помогаю коллегам найти ресурс в трудный период. И, конечно, продолжаю вести клиентов индивидуально.</p>
+        <ul class="facts">
+          <li><b>2023</b><span>Профориентация школьников 9–11 классов</span></li>
+          <li><b>2023–2024</b><span>Стажировка в благотворительном фонде «Просто люди»: психолог-консультант горячей линии помощи людям с ментальными трудностями</span></li>
+          <li><b>2024</b><span>РГПУ им. А. И. Герцена, бакалавриат «Психология»</span></li>
+          <li><b>2024</b><span>Проект «Пазл»: работа с детьми из детских домов</span></li>
+          <li><b>2025</b><span>Обучение в коррекционном центре «Дара»: работа с детьми с аутизмом</span></li>
+          <li><b>2024–2026</b><span>Обучение и развитие сотрудников в компаниях</span></li>
+          <li><b>2026</b><span>Институт практической психологии «Иматон», курс по методу ассессмент-центра</span></li>
+          <li><b>8 выпусков</b><span>Подкаст «Человечки» о психологии: <a href="https://music.yandex.ru/album/34396097">Яндекс Музыка</a>, <a href="https://open.spotify.com/show/75qxh1EIpsEdFm1qM0ZREc">Spotify</a>, <a href="https://vk.ru/podcasts-228644882">VK</a></span></li>
+        </ul>
+      </div>
+      <img src="img/portrait.jpg" alt="Портрет Полины на фоне красной стены">
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap sec">
+      <h2>Что говорят клиенты</h2>
+      <div class="reviews">
+        <blockquote class="quote"><h3>Легко довериться</h3><p>«Полина бережно относится к своей работе. Сразу видно, что она изучает дополнительные материалы и готовится к нашим встречам. Мне было легко доверить ей свои переживания. Небольшие задания реально помогают мне отодвигать тревогу, хоть действия и несложные»</p></blockquote>
+        <blockquote class="quote"><h3>Осознание за осознанием</h3><p>«Шла до дома, и у меня осознание на осознании. Я всё записала. Насколько, оказывается, глубокая тема!»</p></blockquote>
+        <blockquote class="quote"><h3>Новый взгляд на жизнь</h3><p>«После наших консультаций и упражнений я отправилась в путешествие и вообще по-другому начала смотреть на свою жизнь»</p></blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap duo">
+      <img src="img/training.jpg" alt="Полина ведёт тренинг у флипчарта">
+      <div class="prose">
+        <h2>Для компаний</h2>
+        <p>Разрабатываю и провожу тренинги: коммуникация в команде, обратная связь, адаптация новых сотрудников, продажи. Опираюсь на психологию, поэтому обучение работает с людьми, а не только со скриптами.</p>
+        <p class="muted">Чтобы обсудить обучение для вашей команды, напишите мне в Telegram и коротко опишите задачу.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap sec">
+      <h2>Формат и стоимость</h2>
+      <div class="price">
+        <div class="pcard"><h3>Консультация</h3><p class="sum">4 000 ₽</p><p class="muted">55 минут, онлайн</p></div>
+        <div class="pcard"><h3>Сейчас открыта запись</h3><p class="muted">Первая встреча — сразу полноценная сессия. Мы знакомимся, и вы уходите с первыми результатами.</p></div>
+        <p class="rules">Время закрепляется предоплатой 50%. Перенести или отменить встречу можно не позднее чем за сутки, при более поздней отмене предоплата не возвращается.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap duo">
+      <div class="prose">
+        <h2>Гобелен пути</h2>
+        <p>Моё бесплатное приложение: мягкий планер жизни в виде путешествия. Цели, привычки, деньги и настроение без упрёков за пропуски. Все записи хранятся только на вашем телефоне.</p>
+        <div class="btns"><a class="btn solid" style="background:var(--ink);color:var(--paper);border-color:var(--ink)" href="https://ranobeprise-pixel.github.io/gobelen/">Открыть приложение</a></div>
+      </div>
+      <img src="img/path.jpg" alt="Полина у перил с красными лентами, позади горы">
+    </div>
+  </section>
+
+  <section class="cta" id="zapis">
+    <div class="wrap">
+      <div class="box">
+        <h2>Записаться</h2>
+        <p>Напишите мне в Telegram: коротко, с чем хотите прийти и когда вам удобно. Я отвечу в течение суток и предложу время.</p>
+        <a class="btn solid" href="https://t.me/linapsyc" target="_blank" rel="noopener">Написать в Telegram</a>
+        <p class="note">Мой Telegram: <span class="handle">@linapsyc</span></p>
+        <p class="note">Консультации не являются экстренной помощью.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span>© 2026 Полина Окоемова · психолог</span><a href="privacy.html">Политика обработки персональных данных</a></div></footer>
+</body>
+</html>
