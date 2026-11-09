@@ -183,7 +183,7 @@ const helpBtn = (key) => (S.seen?.[key] && !ui.hint ? `<button class="helpbtn" d
 
 function campRoute() {
   const d = S.days[today()];
-  return new Date().getHours() < 15 && !d?.morning ? 'morning' : 'evening';
+  return new Date().getHours() < 15 && !d?.evening ? 'morning' : 'evening';
 }
 
 function tabbar(active, night = false) {
@@ -567,8 +567,10 @@ SCR.complete = () => {
 // ——— Утро и вечер ———
 SCR.morning = () => {
   const d = S.days[today()]?.morning;
-  if (ui.wake === undefined) { ui.wake = d?.wake ?? 0; ui.pid = d?.patternId ?? null; ui.word = d?.word ?? ''; }
+  if (ui.wake === undefined) { ui.wake = 0; ui.pid = null; ui.word = ''; }
   const pats = activeLands().flatMap((l) => l.patterns.map((p) => ({ ...p, land: l })));
+  const dPat = d ? S.lands.flatMap((l) => l.patterns.map((p) => ({ ...p, land: l }))).find((p) => p.id === d.patternId) : null;
+  if (ui.done) return morningDone(d, dPat);
   return `
 <div class="scr tabbed dawn">
   <div style="position:relative" data-amb="motes" data-ambkey="dawn" data-ambo='{"c":"#FFF1C4","n":16}'><img class="hero-img" src="img/scene/morning_${S.hero}.webp" alt="Рассвет на поляне: ${w('странница', 'странник')} сворачивает спальник у палатки" style="height:min(40vh,320px);object-position:center 72%">
@@ -577,6 +579,10 @@ SCR.morning = () => {
       <button data-a="go" data-to="evening" style="height:34px;padding:0 14px;border-radius:999px;color:#F3EBDD;background:none;border:none;font-size:14px">Вечер</button></div></div>
   <div class="pad nt">
     <div class="row" style="justify-content:space-between;align-items:flex-start"><div class="col" style="gap:2px"><h1>Утренние сборы</h1><p class="sub" style="color:#7A5A4A">Три касания — и в путь. Можно пропустить.</p></div>${helpBtn('morning')}</div>
+    ${d && !ui.editing ? `<div class="box col" style="gap:6px;border-color:#C98E2E;background:#FFF8F2"><span class="lbl">Сегодня ты уже ${w('собралась', 'собрался')} в путь</span>
+      <span style="font-size:15px;line-height:1.35">${w('Проснулась', 'Проснулся')}: ${WAKES[d.wake].toLowerCase()}${d.word ? ` · слово дня: «${esc(d.word)}»` : ''}${dPat ? ` · узор: ${esc(dPat.name)} (${esc(landShort(dPat.land))})` : ''}</span>
+      <button class="btn ghost" style="min-height:44px;font-size:15px" data-a="mornEdit">Поправить утренние сборы</button></div>` : ''}
+    <div class="col ${d && !ui.editing ? 'hide' : ''}" style="gap:14px">
     ${hint('morning')}
     <div class="col" style="gap:6px"><span class="lbl">${w('Как ты проснулась?', 'Как ты проснулся?')}</span>
       <div class="seg" style="grid-template-columns:repeat(3,minmax(0,1fr))">${WAKES.map((x, i) => `<button class="tile ${ui.wake === i ? 'on' : ''}" data-a="set" data-k="wake" data-v="${i}" aria-pressed="${ui.wake === i}">${x}</button>`).join('')}</div></div>
@@ -585,6 +591,7 @@ SCR.morning = () => {
         ${emblemHtml(p.land, 32)}<span class="grow" style="text-align:left">${esc(p.name)}</span><span style="font-size:13px;opacity:.8">${esc(landShort(p.land))}</span></button>`).join('')}</div>` : ''}
     <label class="col" style="color:#A3462F">Слово дня<input class="field" data-m="ui.word" value="${esc(ui.word)}" placeholder="например: мягкость, смелость, тишина"></label>
     <button class="btn dawnb" data-a="morningSave">В путь</button>
+    </div>
   </div>
   ${tabbar('camp')}
 </div>`;
@@ -645,6 +652,19 @@ SCR.evening = () => {
   ${tabbar('camp', true)}
 </div>`;
 };
+
+function morningDone(d, pat) {
+  return `
+<div class="scr tabbed dawn">
+  <div style="position:relative" data-amb="motes" data-ambkey="dawn2" data-ambo='{"c":"#FFF1C4","n":18}'><img class="hero-img" src="img/scene/morning_${S.hero}.webp" alt="" style="height:min(46vh,360px);object-position:center 72%"></div>
+  <div class="pad nt" style="text-align:center;align-items:center;justify-content:center">
+    <span class="goth" style="font-size:30px;color:#A3462F">В путь!</span>
+    <p style="margin:0;font-size:17px;line-height:1.4">${d?.word ? `Слово дня — «${esc(d.word)}».` : 'Хорошей дороги.'}${pat ? `<br>Узор на сегодня: ${esc(pat.name)}. Вечером у костра он будет уже отмечен.` : ''}</p>
+    <button class="btn dawnb" data-a="go" data-to="map">К гобелену</button>
+  </div>
+  ${tabbar('camp')}
+</div>`;
+}
 
 function eveningDone() {
   const n = ui.done.stitches;
@@ -885,8 +905,9 @@ function journalItems() {
   for (const [k, d] of Object.entries(S.days)) {
     if (d.morning) {
       const pat = S.lands.flatMap((l) => l.patterns).find((p) => p.id === d.morning.patternId);
-      const parts = [d.morning.word ? `Слово дня — «${d.morning.word}».` : `${w('Проснулась', 'Проснулся')}: ${WAKES[d.morning.wake].toLowerCase()}.`];
-      if (pat) parts.push(`Узор: ${pat.name}.`);
+      const parts = [`${w('Проснулась', 'Проснулся')}: ${WAKES[d.morning.wake].toLowerCase()}.`];
+      if (d.morning.word) parts.push(`Слово дня — «${d.morning.word}».`);
+      if (pat) parts.push(`Узор на сегодня: ${pat.name}.`);
       push(k, { t: 'morning', ord: 1, text: parts.join(' ') });
     }
     if (d.evening) push(k, { t: 'evening', ord: 4, text: `Силы: ${energyName(d.evening.energy).toLowerCase()}. Небо: ${SKIES[d.evening.sky].toLowerCase()}.`, quote: d.evening.note });
@@ -910,7 +931,7 @@ function journalItems() {
   return items;
 }
 const KINDS = {
-  morning: ['Утро', '#9A4A2A', 2], step: ['Шаг', '#4E5A2A', 2], witch: ['Странствующая', '#7A5A12', 1], card: ['Карта', '#7A5A12', 1],
+  morning: ['Утренние сборы', '#9A4A2A', 2], step: ['Шаг', '#4E5A2A', 2], witch: ['Странствующая', '#7A5A12', 1], card: ['Карта', '#7A5A12', 1],
   evening: ['Привал', '#3A4270', 2], note: ['Запись', '#6E5545', 3], thread: ['Нить', '#B8862E', 1], chapter: ['Глава', '#7A5A12', 1], land: ['Земля', '#4E5A2A', 2]
 };
 
@@ -1362,8 +1383,8 @@ A.morningSave = () => {
   const td = today();
   (S.days[td] ||= {}).morning = { wake: ui.wake, patternId: ui.pid, word: (ui.word || '').trim() };
   save();
-  toast('Доброй дороги');
-  go('map');
+  ui = { done: true };
+  render(true);
   reward();
 };
 A.eveLand = (d) => {
@@ -1373,6 +1394,7 @@ A.eveLand = (d) => {
   else ui.lands.push(d.v);
   render();
 };
+A.mornEdit = () => { const d = S.days[today()]?.morning; Object.assign(ui, { editing: true, wake: d.wake, pid: d.patternId, word: d.word || '' }); render(); };
 A.eveEdit = () => {
   const prev = S.days[today()]?.evening;
   Object.assign(ui, { editing: true, energy: prev.energy, sky: prev.sky, lands: (prev.landIds || (prev.landId ? [prev.landId] : [])).slice(), pids: (prev.patternIds || []).slice(), note: prev.note || '' });
