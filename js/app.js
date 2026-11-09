@@ -1,4 +1,4 @@
-import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING, OWN_GOALS, FINDS } from './data.js';
+import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING, OWN_GOALS, FINDS, RARITY, findImg } from './data.js';
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
   weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, cur, replaceAll, resetAll } from './store.js';
 import { startAmbient } from './ambient.js';
@@ -100,25 +100,46 @@ function toast(msg, undo) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), undo ? 5000 : 2300);
 }
+// коллекция находок в Летописи: все 30 ячеек, ненайденные — силуэты с рамкой своей редкости
+function findsBlock() {
+  const got = new Map((S.finds || []).map((f) => [f.i, f.date]));
+  const cnt = (r) => FINDS.filter((x, i) => x[2] === r && got.has(i)).length + ' из ' + FINDS.filter((x) => x[2] === r).length;
+  const head = `<button data-a="toggle" data-k="findsOpen" aria-expanded="${!!ui.findsOpen}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;min-height:44px;color:inherit;text-align:left"><span class="lbl">✦ Находки на тропе · ${got.size} из ${FINDS.length}</span><span style="font-size:13px;color:var(--muted)">${ui.findsOpen ? 'скрыть ▴' : 'показать ▾'}</span></button>`;
+  if (!ui.findsOpen) return `<div class="col" style="gap:6px">${head}</div>`;
+  const sel = ui.findSel != null && got.has(ui.findSel) ? ui.findSel : null;
+  const group = (r) => `<div class="col" style="gap:6px"><span class="small" style="color:var(--muted)">${RARITY[r].plural} · ${cnt(r)}</span><div class="findgrid">${FINDS.map((x, i) => [x, i]).filter(([x]) => x[2] === r).map(([x, i]) => got.has(i)
+    ? `<button class="fcell fr-${r}${sel === i ? ' on' : ''}" data-a="findSel" data-i="${i}" aria-label="${esc(x[0])}"><img src="${findImg(i)}" alt="" width="56" height="56"></button>`
+    : `<span class="fcell fr-${r} empty" aria-label="ещё не найдено">?</span>`).join('')}</div></div>`;
+  const det = sel != null ? `<div class="box row fc-${FINDS[sel][2]}" style="gap:12px;align-items:center"><img src="${findImg(sel)}" alt="" width="64" height="64" style="image-rendering:pixelated"><span class="col grow" style="gap:2px"><span class="findlbl">${RARITY[FINDS[sel][2]].name}</span><b>${esc(FINDS[sel][0])}</b><span class="small">${esc(FINDS[sel][1])}</span><span class="small" style="color:var(--muted)">найдено ${fmtShort(got.get(sel))}</span></span></div>` : '';
+  return `<div class="col" style="gap:10px">${head}${det}${group('m')}${group('r')}${group('c')}</div>`;
+}
 // ——— находка на тропе: маленькая радость раз в день ———
 function reward() {
   const td = today();
   S.finds ||= [];
   if (S.finds.some((f) => f.date === td)) return;
   const have = new Set(S.finds.map((f) => f.i));
-  let pool = FINDS.map((_, i) => i).filter((i) => !have.has(i));
+  // сначала тянем редкость (70/25/5 %), мифических нет в первые 3 дня; потом — предмет этой редкости, которого ещё нет
+  const allowed = Object.keys(RARITY).filter((r) => r !== 'm' || S.finds.length >= 3);
+  let roll = Math.random() * allowed.reduce((s, r) => s + RARITY[r].w, 0), tier = allowed[0];
+  for (const r of allowed) { if ((roll -= RARITY[r].w) < 0) { tier = r; break; } }
+  const free = (r) => FINDS.map((_, i) => i).filter((i) => !have.has(i) && (!r || FINDS[i][2] === r));
+  let pool = free(tier);
+  if (!pool.length) pool = free(null).filter((i) => allowed.includes(FINDS[i][2]));
+  if (!pool.length) pool = free(null);
   if (!pool.length) pool = FINDS.map((_, i) => i);
   const i = pool[Math.floor(Math.random() * pool.length)];
+  const rar = FINDS[i][2];
   S.finds.push({ date: td, i });
   save();
   setTimeout(() => {
     document.querySelectorAll('.findcard').forEach((x) => x.remove());
     const el = document.createElement('div');
-    el.className = 'findcard'; el.setAttribute('role', 'status');
-    el.innerHTML = `<span class="findspark" aria-hidden="true">✦</span><span class="col" style="gap:1px"><span style="font-size:12px;letter-spacing:.5px;opacity:.8">НАХОДКА НА ТРОПЕ</span><b style="font-size:16px">${esc(FINDS[i][0])}</b><span style="font-size:13px;opacity:.85">${esc(FINDS[i][1])}</span></span>`;
+    el.className = 'findcard fc-' + rar; el.setAttribute('role', 'status');
+    el.innerHTML = `<img class="findimg" src="${findImg(i)}" alt="" width="64" height="64"><span class="col" style="gap:1px"><span class="findlbl">${RARITY[rar].label.toUpperCase()}</span><b style="font-size:16px">${esc(FINDS[i][0])}</b><span style="font-size:13px;opacity:.85">${esc(FINDS[i][1])}</span></span>`;
     el.addEventListener('click', () => el.remove());
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 4200);
+    setTimeout(() => el.remove(), rar === 'm' ? 6500 : rar === 'r' ? 5200 : 4200);
   }, 900);
 }
 // удаление с возможностью вернуть: снимок всего состояния до действия
@@ -955,9 +976,7 @@ SCR.journal = () => {
     : `<span class="small" style="color:var(--muted)">Следующую карту можно вытянуть с ${fmtDay(nextCardDay())}</span>`}
   ${S.witch.pending ? `<button class="box row" data-a="go" data-to="visit" style="text-align:left;color:inherit"><div class="ava" role="img" aria-label=""></div><span class="grow" style="font-size:16px">Странствующая ждёт тебя у костра</span>${I.chev}</button>`
     : S.settings.witchFreq !== 'call' || S.witch.lastVisit === today() ? '' : `<button class="box row" data-a="callWitch" style="text-align:left;color:inherit"><div class="ava" role="img" aria-label=""></div><span class="grow col" style="gap:0"><span style="font-size:16px;font-weight:700">Позвать Странствующую</span><span class="small">она задаст один вопрос</span></span>${I.chev}</button>`}
-  ${(S.finds || []).length ? `<div class="col" style="gap:6px">
-    <button data-a="toggle" data-k="findsOpen" aria-expanded="${!!ui.findsOpen}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;min-height:44px;color:inherit;text-align:left"><span class="lbl">✦ Находки на тропе · ${S.finds.length}</span><span style="font-size:13px;color:var(--muted)">${ui.findsOpen ? 'скрыть ▴' : 'показать ▾'}</span></button>
-    ${ui.findsOpen ? `<div class="col" style="gap:4px">${[...S.finds].reverse().map((f) => `<div class="row" style="align-items:flex-start;font-size:14px;line-height:1.35"><span style="color:#B8862E">✦</span><span class="grow"><b>${esc(FINDS[f.i][0])}</b> — ${esc(FINDS[f.i][1])}</span><span style="font-size:12px;color:var(--muted);white-space:nowrap">${fmtShort(f.date)}</span></div>`).join('')}</div>` : ''}</div>` : ''}
+  ${(S.finds || []).length ? findsBlock() : ''}
   ${wall.length ? `<div class="col" style="gap:6px"><span class="lbl">Стена Летописи</span><div class="row" style="flex-wrap:wrap;gap:12px">${wall.map((x) => `<span class="col" style="align-items:center;gap:2px;font-size:12px;width:72px;text-align:center">${emblemHtml(x, 56, 'box-shadow:0 0 0 3px #E9C77B')}${esc(x.customName || landDef(x.id)?.short || '')}</span>`).join('')}</div></div>` : ''}
   <div role="group" aria-label="Что показывать" class="row" style="flex-wrap:wrap;gap:6px">${filters.map((f, i) => `<button class="chip ${ui.filter === i ? 'on' : ''}" style="min-height:36px" data-a="set" data-k="filter" data-v="${i}" aria-pressed="${ui.filter === i}">${f}</button>`).join('')}</div>
   ${ui.writing ? `<div class="box col"><textarea id="noteTa" class="field" rows="4" data-m="ui.noteText" placeholder="Что хочется оставить в летописи?">${esc(ui.noteText || '')}</textarea>
@@ -1190,6 +1209,7 @@ A.tab = (d) => go(d.to === 'camp' ? campRoute() : d.to);
 A.hintOk = (d) => { S.seen[d.k] = true; save(); ui.hint = false; render(); };
 A.set = (d) => { ui[d.k] = Number(d.v); render(); };
 A.setS = (d) => { ui[d.k] = ui[d.k] === d.v ? null : d.v; render(); };
+A.findSel = (d) => { const i = +d.i; ui.findSel = ui.findSel === i ? null : i; render(); };
 A.toggle = (d) => { ui[d.k] = !ui[d.k]; if (d.focus) ui.focus = d.focus; render(); };
 
 // первый вход

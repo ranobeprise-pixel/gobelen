@@ -185,3 +185,22 @@ canvas.amb{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
 .sheetup{z-index:2}
 [data-amb]>[role="group"],.mapwrap .slot,.mapwrap .mapbanners,.mapwrap .dialog{z-index:3}
 canvas.amb.soft{image-rendering:auto;mix-blend-mode:screen}
+/* находки: картинки и редкость */
+.findcard:has(.findimg){width:min(92%,400px)}
+.findimg{width:64px;height:64px;image-rendering:pixelated;flex:none;animation:findspin .9s ease-out}
+.findlbl{font-size:12px;letter-spacing:.5px;opacity:.8}
+.findcard.fc-r{background:linear-gradient(135deg,#E4EEF8,#BFD3EA);border-color:#6E93C2;color:#1E2A3B;box-shadow:0 0 0 2px rgba(110,147,194,.35),0 10px 26px rgba(0,0,0,.35)}
+.findcard.fc-m{background:linear-gradient(135deg,#F6E3B0,#E2C6F0 55%,#F6E3B0);background-size:200% 200%;border-color:#B07BD6;color:#2E1838;box-shadow:0 0 0 2px rgba(214,170,80,.6),0 0 24px rgba(176,123,214,.55),0 10px 26px rgba(0,0,0,.35);animation:finddrop 6.5s ease-out forwards,mythshine 3s linear infinite}
+.findcard.fc-m .findlbl{font-weight:700;opacity:1;color:#7A3FA6}
+.findcard.fc-r .findlbl{font-weight:700;opacity:1;color:#2F5C93}
+@keyframes mythshine{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.findgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.fcell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;border:2px solid #C9A24A;background:rgba(201,162,74,.10);padding:0;min-height:44px;font-size:22px;color:inherit}
+.fcell img{width:80%;height:80%;image-rendering:pixelated}
+.fcell.fr-r{border-color:#6E93C2;background:rgba(110,147,194,.12)}
+.fcell.fr-m{border-color:#B07BD6;background:rgba(176,123,214,.14);box-shadow:0 0 10px rgba(176,123,214,.35)}
+.fcell.empty{opacity:.35;border-style:dashed;box-shadow:none}
+.fcell.on{outline:3px solid var(--gold,#E9C77B);outline-offset:1px}
+.box.fc-r{border-color:#6E93C2}
+.box.fc-m{border-color:#B07BD6}
+@media (prefers-reduced-motion:reduce){.findimg,.findcard.fc-m{animation:none}}
