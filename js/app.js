@@ -1,3 +1,4 @@
+import { shareFind, shareCard, shareMap } from './share.js';
 import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING, OWN_GOALS, FINDS, RARITY, findImg } from './data.js';
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
   weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, cur, replaceAll, resetAll } from './store.js';
@@ -26,6 +27,7 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
 const energyName = (i) => (S.hero === 'm' ? ENERGY_M : ENERGY)[i];
 
 const I = {
+  share: '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   chev: '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="#9A7E62" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   x: '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -110,7 +112,7 @@ function findsBlock() {
   const group = (r) => `<div class="col" style="gap:6px"><span class="small" style="color:var(--muted)">${RARITY[r].plural} · ${cnt(r)}</span><div class="findgrid">${FINDS.map((x, i) => [x, i]).filter(([x]) => x[2] === r).map(([x, i]) => got.has(i)
     ? `<button class="fcell fr-${r}${sel === i ? ' on' : ''}" data-a="findSel" data-i="${i}" aria-label="${esc(x[0])}"><img src="${findImg(i)}" alt="" width="56" height="56"></button>`
     : `<span class="fcell fr-${r} empty" aria-label="ещё не найдено">?</span>`).join('')}</div></div>`;
-  const det = sel != null ? `<div class="box row fc-${FINDS[sel][2]}" style="gap:12px;align-items:center"><img src="${findImg(sel)}" alt="" width="64" height="64" style="image-rendering:pixelated"><span class="col grow" style="gap:2px"><span class="findlbl">${RARITY[FINDS[sel][2]].name}</span><b>${esc(FINDS[sel][0])}</b><span class="small">${esc(FINDS[sel][1])}</span><span class="small" style="color:var(--muted)">найдено ${fmtShort(got.get(sel))}</span></span></div>` : '';
+  const det = sel != null ? `<div class="box row fc-${FINDS[sel][2]}" style="gap:12px;align-items:center"><img src="${findImg(sel)}" alt="" width="64" height="64" style="image-rendering:pixelated"><span class="col grow" style="gap:2px"><span class="findlbl">${RARITY[FINDS[sel][2]].name}</span><b>${esc(FINDS[sel][0])}</b><span class="small">${esc(FINDS[sel][1])}</span><span class="small" style="color:var(--muted)">найдено ${fmtShort(got.get(sel))}</span><button class="link" data-a="shareFind" data-i="${sel}" style="align-self:flex-start;padding:0;color:var(--rust)">${I.share} Поделиться</button></span></div>` : '';
   return `<div class="col" style="gap:10px">${head}${det}${group('m')}${group('r')}${group('c')}</div>`;
 }
 // ——— находка на тропе: маленькая радость раз в день ———
@@ -449,6 +451,7 @@ SCR.map = () => {
   <div class="mapwrap" data-amb="stitches" data-ambkey="map" data-ambo='{"spots":[[0.303,0.270,0.09],[0.705,0.273,0.09],[0.297,0.737,0.09],[0.697,0.800,0.09]]}'>
     <img class="tap" src="img/tapestry.webp" alt="Вышитая карта: золотой город в центре, к нему ведут тропы от земель">
     ${slots}
+    ${!firstDay && lands.length ? `<button class="mapshare" data-a="shareMap" aria-label="Поделиться гобеленом">${I.share}<span>Поделиться</span></button>` : ''}
     ${!firstDay && (chap || pending) ? `<div class="mapbanners">
       ${pending ? `<button class="mapbanner" data-a="go" data-to="visit">${I.spindle} У костра тебя кто-то ждёт</button>` : ''}
       ${chap ? `<button class="mapbanner" data-a="go" data-to="chapter">${I.spindle} Глава ${chap.n} завершена</button>` : ''}</div>` : ''}
@@ -764,7 +767,7 @@ SCR.card = () => {
       <p style="margin:0;font-size:20px;line-height:1.3">${esc(q[0])}</p>
       <p style="margin:0;font-size:17px;line-height:1.35;color:var(--lav)">${esc(q[1])}</p>
       <textarea class="field" rows="3" data-m="ui.cans" placeholder="Можно ответить — или просто подумать">${esc(ui.cans || '')}</textarea>
-      <div class="col mt-auto"><button class="btn gold" data-a="cardSave" data-v="weave">Вплести в Летопись</button><button class="btn ghost" data-a="cardSave" data-v="carry">Подумаю позже</button><span class="small center" style="color:var(--nmuted)">Карта сохранится в Летописи, а её вопрос подождёт тебя вечером у костра</span></div></div>`;
+      <div class="col mt-auto"><button class="btn gold" data-a="cardSave" data-v="weave">Вплести в Летопись</button><button class="btn ghost" data-a="cardSave" data-v="carry">Подумаю позже</button><span class="small center" style="color:var(--nmuted)">Карта сохранится в Летописи, а её вопрос подождёт тебя вечером у костра</span><button class="link" data-a="shareCard" style="align-self:center;color:var(--gold)">${I.share} Поделиться картой в сторис</button></div></div>`;
   }
   return `
 <div class="scr night"><div class="pad">
@@ -1209,6 +1212,10 @@ A.tab = (d) => go(d.to === 'camp' ? campRoute() : d.to);
 A.hintOk = (d) => { S.seen[d.k] = true; save(); ui.hint = false; render(); };
 A.set = (d) => { ui[d.k] = Number(d.v); render(); };
 A.setS = (d) => { ui[d.k] = ui[d.k] === d.v ? null : d.v; render(); };
+const shareSafe = (fn) => fn().catch(() => toast('Не получилось собрать картинку. Попробуй ещё раз'));
+A.shareFind = (d) => shareSafe(() => shareFind(+d.i, new Set((S.finds || []).map((f) => f.i)).size));
+A.shareCard = () => ui.card && shareSafe(() => shareCard(cardImg(ui.card), cardName(ui.card), cardQs(ui.card)[0]));
+A.shareMap = () => { const t = new Date(); shareSafe(() => shareMap(activeLands().filter((l) => l.slot != null && l.slot < 4).map((l) => ({ slot: l.slot, src: emblemSrc(l), pct: Math.round(landProgress(l) * 100), label: landShort(l), letter: (l.customName || '?')[0] })), EMBLEM_SLOTS, `${t.getDate()} ${MONTHS[t.getMonth()]}`)); };
 A.findSel = (d) => { const i = +d.i; ui.findSel = ui.findSel === i ? null : i; render(); };
 A.toggle = (d) => { ui[d.k] = !ui[d.k]; if (d.focus) ui.focus = d.focus; render(); };
 
