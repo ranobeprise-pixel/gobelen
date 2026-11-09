@@ -2,7 +2,7 @@ import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
   weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, cur, replaceAll, resetAll } from './store.js';
 import { startAmbient } from './ambient.js';
-import { BUILD } from './version.js';
+import { BUILD, BUILD_DATE } from './version.js';
 import { g, mood, weekMoonLabel, evaluateVisit, cardName, cardImg, cardQs, drawCard, canAskCard, nextCardDay,
   detectThreads, threadFact, chapterDue, rangeStats, callWitch } from './engine.js';
 
@@ -20,6 +20,7 @@ const fmtDay = (k) => { const d = parseDay(k); return `${d.getDate()} ${MONTHS[d
 const fmtShort = (k) => { const d = parseDay(k); return `${d.getDate()} ${MON3[d.getMonth()]}`; };
 const plural = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? b : c; };
 const stitchW = (n) => `${n} ${plural(n, 'стежок', 'стежка', 'стежков')}`;
+const stitchGen = (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'стежка' : 'стежков'}`;
 const threadW = (n) => `${n} ${plural(n, 'нить', 'нити', 'нитей')}`;
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const energyName = (i) => (S.hero === 'm' ? ENERGY_M : ENERGY)[i];
@@ -124,7 +125,7 @@ function reward() {
 function withUndo(msg, fn) {
   const snap = JSON.stringify(S);
   fn(); save(); render();
-  toast(msg, () => { replaceAll(JSON.parse(snap)); render(); toast('Вернула как было'); });
+  toast(msg, () => { replaceAll(JSON.parse(snap)); render(); toast('Восстановлено'); });
 }
 // ——— путеводитель: подсказки при первом заходе на экран ———
 function HINTS() {
@@ -335,7 +336,7 @@ SCR.weave = () => {
     <div class="row" style="flex-wrap:wrap;gap:6px">${hints.slice(0, 6).map((h) => `<button class="chip add" data-a="patAdd" data-name="${esc(h)}">+ ${esc(h)}</button>`).join('')}</div></div>` : ''}
   <div class="row"><input id="ownPat" class="field grow" data-m="ui.newPat" value="${esc(ui.newPat || '')}" placeholder="Свой узор, например: час на проект" style="height:44px"><button class="btn" style="width:auto;min-height:44px" data-a="patAddOwn">Вшить</button></div>
   <div class="col mt-auto">
-    ${pats.length ? `<div role="status" class="note ${heavy ? 'warn' : 'ok'}">Узоры этой земли — до ${stitchW(total)} в неделю${heavy ? '. Тяжеловато — оставь себе запас сил.' : '. По силам.'}</div>` : '<div class="note ok">Можно начать и без узоров: шаги к этой земле можно отмечать у вечернего костра.</div>'}
+    ${pats.length ? `<div role="status" class="note ${heavy ? 'warn' : 'ok'}">Узоры этой земли — до ${stitchGen(total)} в неделю${heavy ? '. Тяжеловато — оставь себе запас сил.' : '. По силам.'}</div>` : '<div class="note ok">Можно начать и без узоров: шаги к этой земле можно отмечать у вечернего костра.</div>'}
     <button class="btn" data-a="weaveNext">${nextLabel}</button>
   </div>
 </div></div>`;
@@ -373,6 +374,7 @@ SCR.tsetup = () => {
     </div>`).join('')}
     <div class="row"><input class="field grow" style="height:44px" data-m="ui.newChest" value="${esc(ui.newChest || '')}" placeholder="Свой сундук, например: новый ноутбук"><button class="btn amber" style="width:auto;min-height:44px" data-a="chestAdd">Добавить</button></div>
   </div>
+  ${edit && ui.cur !== (S.treasury.currency || '₽') && (S.treasury.spends.length || S.treasury.chests.some((c) => c.saved) || S.treasury.wallet !== null) ? `<p class="note warn" style="margin:0">Суммы не пересчитаются: поменяется только значок. Например, ${Math.round(S.treasury.chests[0]?.saved || 1000).toLocaleString('ru-RU')} ${S.treasury.currency || '₽'} станет ${Math.round(S.treasury.chests[0]?.saved || 1000).toLocaleString('ru-RU')} ${ui.cur}.</p>` : ''}
   <div class="row" style="justify-content:space-between"><span class="lbl">Валюта</span><div class="row" style="gap:6px">${['₽', '$', '€'].map((c) => `<button class="tile ${ui.cur === c ? 'on' : ''}" style="width:52px;min-height:40px;font-size:18px" data-a="setCur" data-v="${c}" aria-pressed="${ui.cur === c}">${c}</button>`).join('')}</div></div>
   <div class="col" style="gap:6px"><span class="lbl">Как будешь вести траты?</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -461,7 +463,7 @@ function goalCard(l) {
       ${L('M', 'Измеримо', 'как пойму, что получилось?')}
       <div class="row"><input class="field" style="height:44px;width:96px" inputmode="decimal" data-m="ui.gTarget" value="${esc(ui.gTarget || '')}" placeholder="12"><input class="field grow" style="height:44px" data-m="ui.gUnit" value="${esc(ui.gUnit || '')}" placeholder="книг, клиентов, раз…"></div>
       ${L('A', 'Достижимо', 'хватит ли сил?')}
-      <span style="font-size:14px;${muted}">Сейчас узоры этой земли — до ${stitchW(weeklyLoad(l.patterns))} в неделю. Если цель большая, раздели её или дай больше времени.</span>
+      <span style="font-size:14px;${muted}">Сейчас узоры этой земли — до ${stitchGen(weeklyLoad(l.patterns))} в неделю. Если цель большая, раздели её или дай больше времени.</span>
       ${L('R', 'Значимо', 'зачем это мне?')}
       <input class="field" style="height:44px" data-m="ui.gWhy" value="${esc(ui.gWhy || '')}" placeholder="Чтобы… (можно пропустить)">
       ${L('T', 'Ограничено', 'к какому сроку?')}
@@ -517,7 +519,7 @@ SCR.land = () => {
       ${ui.histOpen ? [...l.goalHistory].reverse().map((x) => `<div class="row" style="align-items:flex-start;font-size:14px;line-height:1.35;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05)"><span style="color:${x.status === 'done' ? 'var(--moon)' : '#B9AECB'}">${x.status === 'done' ? '✓' : '○'}</span><span class="col grow" style="gap:0"><span>${esc(x.text)}</span><span style="font-size:12px;color:#B9AECB">${x.status === 'done' ? 'достигнута' : 'отпущена'} ${fmtDay(x.closedAt)}${x.target ? ` · ${x.current} из ${x.target} ${esc(x.unit || '')}` : ''}</span></span></div>`).join('') : ''}
     </div>` : ''}
     <div class="col" style="gap:4px"><div class="prog" role="img" aria-label="Вышито ${pct} процентов" style="background:rgba(255,255,255,.08)"><div style="width:${pct}%"></div></div>
-    <span style="font-size:13px;color:#B9AECB">Земля проступает: ${stitchW(l.stitches)} из ${l.target}${l.patterns.length ? ' — примерно 6 недель по твоему плану узоров' : ''}</span></div>
+    <span style="font-size:13px;color:#B9AECB">Земля проступает: ${stitchW(l.stitches)} из ${l.target}${(() => { const wk = weeklyLoad(l.patterns); const left = l.target - l.stitches; if (!wk || left <= 0) return ''; const n = Math.max(1, Math.round(left / wk)); return ` — по плану узоров ещё примерно ${n} ${plural(n, 'неделя', 'недели', 'недель')}`; })()}</span></div>
     ${p >= 1 ? `<button class="btn moon" data-a="go" data-to="complete" data-id="${l.id}">Земля вышита — что дальше?</button>` : ''}
     <div class="row" style="justify-content:space-between;align-items:baseline"><span style="font-size:16px;color:var(--moon)">Узоры — дела этой земли</span>
       <button class="link" style="color:#D9D0E8;padding:6px 0" data-a="weaveEdit" data-id="${l.id}">Изменить узоры</button></div>
@@ -617,10 +619,11 @@ SCR.evening = () => {
       <span style="font-size:15px;line-height:1.35">Силы: ${energyName(prev.energy).toLowerCase()} · небо: ${SKIES[prev.sky].toLowerCase()}${prevLands.length ? ` · шаг: ${prevLands.map((l) => esc(landShort(l))).join(', ')}` : ''}</span>
       ${prev.note ? `<span style="font-size:14px;font-style:italic;color:var(--lav)">«${esc(prev.note)}»</span>` : ''}
       <button class="btn ghost" style="min-height:44px;font-size:15px" data-a="eveEdit">Поправить сегодняшний привал</button>
-      <span class="small" style="color:var(--nmuted)">Если заполнишь форму ниже заново, она заменит эту запись.</span></div>` : ''}
+</div>` : ''}
     ${carried ? `<div class="box col"><span class="lbl">Вопрос из котомки</span><span style="font-size:16px;line-height:1.35">${esc(carried.q)}</span>
       <textarea class="field" rows="2" data-m="ui.carriedAns" placeholder="Можно пару слов — или оставить">${esc(ui.carriedAns || '')}</textarea></div>` : ''}
     ${needBackup ? `<button class="box row" data-a="go" data-to="backup" style="text-align:left;color:inherit"><span class="grow" style="font-size:15px">Воскресенье. Сохранишь копию летописи?</span>${I.chev}</button>` : ''}
+    <div class="col ${prev && !ui.editing ? 'hide' : ''}" style="gap:14px">
     <div class="col" style="gap:6px"><span class="lbl">Сколько в тебе сил</span>
       <div class="row" style="justify-content:space-between">${[2, 5, 8, 11, 13].map((r, i) => `<button data-a="set" data-k="energy" data-v="${i}" aria-label="${energyName(i)}" aria-pressed="${ui.energy === i}" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;background:${ui.energy === i ? '#232C55' : 'transparent'};border:2px solid ${ui.energy === i ? 'var(--pink)' : 'transparent'}"><svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#C9B26A" stroke-width="1.5"/><circle cx="15" cy="15" r="${r}" fill="#E9C77B"/></svg></button>`).join('')}</div>
       <span class="small center" style="color:var(--nmuted)">${energyName(ui.energy)}</span></div>
@@ -637,6 +640,7 @@ SCR.evening = () => {
     </div>
     <label class="col">Пара слов о дне (необязательно)<textarea class="field" rows="2" data-m="ui.note" placeholder="Что было важным сегодня?">${esc(ui.note)}</textarea></label>
     <button class="btn gold" data-a="eveningSave">Вплести в гобелен</button>
+    </div>
   </div>
   ${tabbar('camp', true)}
 </div>`;
@@ -711,7 +715,8 @@ SCR.card = () => {
     body = `<div class="col" style="flex:1;align-items:center;gap:14px">
       <img class="cardimg" src="${cardImg(c)}" alt="Карта Колоды Пути" style="width:min(236px,60vw)">
       <label class="col" style="align-self:stretch;font-size:17px;color:#F1E9D8">Что ты видишь на карте?<textarea class="field" rows="2" data-m="ui.seen" placeholder="Первое, что приходит в голову…">${esc(ui.seen || '')}</textarea></label>
-      <button class="btn gold mt-auto" data-a="cardReveal">Узнать имя карты</button></div>`;
+      <button class="btn gold mt-auto" data-a="cardReveal">Узнать имя карты</button>
+      <button class="link" data-a="go" data-to="${P.src === 'ask' ? 'journal' : 'map'}">Вернусь к ней позже</button></div>`;
   } else {
     body = `<div class="col" style="flex:1;gap:16px">
       <div class="row" style="align-items:flex-start;gap:14px"><img class="cardimg" src="${cardImg(c)}" alt="${esc(cardName(c))}" style="flex:0 0 140px;width:140px"><span class="goth" style="font-size:32px;line-height:1.05;padding-top:4px">${esc(cardName(c))}</span></div>
@@ -732,7 +737,7 @@ SCR.card = () => {
 SCR.treasury = () => {
   const T = S.treasury;
   const td = today();
-  if (ui.tag === undefined) ui.tag = 0;
+  if (ui.tag === undefined) ui.tag = 1;
   const wk = T.spends.filter((s) => daysBetween(s.date, td) < 7);
   const sum = (arr) => arr.reduce((a, s) => a + s.amount, 0);
   const wkSum = sum(wk);
@@ -1031,7 +1036,7 @@ SCR.settings = () => {
     <span class="col grow" style="gap:1px"><span style="font-size:17px;font-weight:700">${r[0]}</span><span style="font-size:14px;color:var(--muted)">${r[1]}</span></span>${I.chev}</button>`).join('')}</div>
   <button data-a="go" data-to="safety" class="row mt-auto" style="min-height:58px;padding:8px 14px;border-radius:12px;background:var(--night2);color:#F1E9D8;border:none;text-align:left">${I.heart}
     <span class="col grow" style="gap:0"><span style="font-size:17px;font-weight:700">Если тяжело</span><span style="font-size:14px;color:#C9C3D6">Близкие люди и помощь, всегда под рукой</span></span></button>
-  <p class="small center" style="margin:0;color:var(--muted)">Версия ${BUILD}</p>
+  <p class="small center" style="margin:0;color:var(--muted)">Версия от ${fmtDay(BUILD_DATE)} · ${BUILD.slice(0, 4)}</p>
   <p class="small center" style="margin:0;color:var(--muted)">Шрифты: Gatchina — Dimitri Antonov / Blue Curve Designstudio (CC BY 4.0), Brahms Gotisch — Sasha Pavljenko.</p>
 </div></div>`;
 };
@@ -1536,7 +1541,7 @@ A.castUndo = (d) => {
   if (lastCast) sp.casts.splice(sp.casts.lastIndexOf(lastCast), 1);
   const x = [...S.steps].reverse().find((q) => q.date === td && q.src === 'spell' && q.spellId === sp.id);
   if (x) { const l = landOf(x.landId); if (l && l.tier === x.tier) l.stitches = Math.max(0, l.stitches - x.stitches); S.steps.splice(S.steps.lastIndexOf(x), 1); }
-  save(); render();
+  save(); toast('Отметка снята'); render();
 };
 A.spellSeed = (d) => {
   const x = SPELL_SEEDS[Number(d.i)];

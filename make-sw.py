@@ -25,7 +25,8 @@ files.append('js/version.js')
 idx = open('index.html').read()
 idx = re.sub(r'(css/app\.css|js/app\.js)\?v=[0-9a-z]+', lambda m: m.group(1) + '?v=' + ver, idx)
 open('index.html', 'w').write(idx)
-open('js/version.js', 'w').write(f"export const BUILD = '{ver}';\n")
+import datetime
+open('js/version.js', 'w').write(f"export const BUILD = '{ver}';\nexport const BUILD_DATE = '{datetime.date.today().isoformat()}';\n")
 
 open('sw.js', 'w').write(f"""// Офлайн-кэш. Версия меняется при каждой сборке.
 const VERSION = 'gobelen-{ver}';

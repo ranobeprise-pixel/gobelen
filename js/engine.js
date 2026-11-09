@@ -110,8 +110,14 @@ function echoCandidate() {
 export function callWitch() {
   const m = mood();
   const type = m === 'down' ? 'low' : 'random';
-  S.witch.pending = makeVisit(type, { card: Math.random() < 0.4, called: true });
-  return S.witch.pending;
+  const v = makeVisit(type, { card: Math.random() < 0.4, called: true });
+  v.line = g(pick([
+    ['«Ты звала? Я здесь. Присядем у огня».', '«Ты звал? Я здесь. Присядем у огня».'],
+    ['«Я услышала, как ты меня позвала. Огонь как раз разгорелся».', '«Я услышала, как ты меня позвал. Огонь как раз разгорелся».'],
+    ['«Хорошо, что позвала. У меня есть для тебя один вопрос».', '«Хорошо, что позвал. У меня есть для тебя один вопрос».']
+  ]));
+  S.witch.pending = v;
+  return v;
 }
 
 // ——— колода ———

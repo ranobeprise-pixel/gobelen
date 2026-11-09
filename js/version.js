@@ -1,1 +1,2 @@
-export const BUILD = '419d93de6f';
+export const BUILD = '18ae41448b';
+export const BUILD_DATE = '2026-11-09';
