@@ -207,6 +207,8 @@ canvas.amb.soft{image-rendering:auto;mix-blend-mode:screen}
 /* поделиться в сторис */
 .mapshare{position:absolute;left:4%;bottom:1.5%;z-index:4;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #C9A24A;background:rgba(31,22,17,.82);color:#F3EBDD;font-size:14px}
 .link svg{vertical-align:-4px}
-.shareov{position:fixed;inset:0;z-index:90;background:rgba(10,7,5,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(20px + var(--safe-t)) 20px 24px;color:#F3EBDD;text-align:center}
+.shareov{position:fixed;inset:0;z-index:90;background:#140E0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(20px + var(--safe-t)) 20px 24px;color:#F3EBDD;text-align:center}
 .shareov img{max-height:70vh;max-width:100%;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .shareov p{margin:0;font-size:15px}
+.shareov .btn.ghost{color:#F3EBDD;border:1px solid #8C7A5E;background:transparent}
+.shareov img{max-height:74vh}

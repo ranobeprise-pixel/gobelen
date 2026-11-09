@@ -55,15 +55,23 @@ function glow(x, cx, cy, r, color) {
 async function deliver(cv, name, title) {
   const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
   const file = new File([blob], name, { type: 'image/png' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
-  }
-  // запасной путь: показать картинку, чтобы её можно было сохранить вручную
+  const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+  // сначала показываем картинку внутри приложения: человек видит, чем делится, и сам решает
   document.querySelectorAll('.shareov').forEach((o) => o.remove());
   const url = URL.createObjectURL(blob);
   const ov = document.createElement('div'); ov.className = 'shareov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Картинка для сторис');
-  ov.innerHTML = `<img src="${url}" alt="${title}"><p>Нажми на картинку и удерживай, чтобы сохранить её в Фото</p><div class="row" style="gap:10px;justify-content:center"><a class="btn gold" href="${url}" download="${name}" style="text-decoration:none">Скачать</a><button class="btn ghost" type="button">Закрыть</button></div>`;
-  ov.querySelector('button').addEventListener('click', () => { ov.remove(); URL.revokeObjectURL(url); });
+  ov.innerHTML = `<img src="${url}" alt="${title}">
+    ${canShare ? '' : '<p>Нажми на картинку и удерживай, чтобы сохранить её в Фото</p>'}
+    <div class="row" style="gap:10px;justify-content:center;width:100%;max-width:360px">
+      <button class="btn ghost" type="button" data-x="close" style="flex:1">Закрыть</button>
+      ${canShare ? '<button class="btn gold" type="button" data-x="share" style="flex:1">Поделиться</button>' : `<a class="btn gold" href="${url}" download="${name}" style="flex:1;text-decoration:none">Скачать</a>`}
+    </div>`;
+  const close = () => { ov.remove(); URL.revokeObjectURL(url); };
+  ov.querySelector('[data-x="close"]').addEventListener('click', close);
+  const sb = ov.querySelector('[data-x="share"]');
+  if (sb) sb.addEventListener('click', async () => {
+    try { await navigator.share({ files: [file], title }); close(); } catch (e) { /* отменили — остаёмся на просмотре */ }
+  });
   document.body.appendChild(ov);
 }
 
