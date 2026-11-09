@@ -33,7 +33,7 @@ function header(x, sub) {
 }
 function footer(x) {
   x.textAlign = 'center';
-  x.fillStyle = C.muted; x.font = `italic 36px ${BODY}`; x.fillText('мягкий планер жизни в виде путешествия', W / 2, H - 150);
+  x.fillStyle = C.muted; x.font = `italic 36px ${BODY}`; x.fillText('мягкий планер жизни', W / 2, H - 150);
   x.fillStyle = C.gold; x.font = `38px ${BODY}`; x.fillText(URL_TEXT, W / 2, H - 96);
 }
 // перенос строк по ширине; возвращает y после последней строки
