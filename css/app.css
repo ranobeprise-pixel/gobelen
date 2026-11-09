@@ -79,7 +79,7 @@ label.col{font-size:15px;color:var(--muted)}
 
 /* выбор */
 .seg{display:grid;gap:6px}
-.chip{min-height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;color:inherit}
+.chip{min-height:44px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;color:inherit}
 .chip.on{background:var(--ink);border-color:var(--ink);color:#F3EBDD}
 .chip.add{border-style:dashed;border-color:#9A7E62}
 .night .chip{border-color:var(--nline)} .night .chip.on{background:var(--pink);border-color:var(--pink);color:var(--night)}
