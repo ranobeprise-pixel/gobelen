@@ -791,33 +791,10 @@ SCR.card = () => {
 };
 
 // ——— Сокровищница ———
-// пиксельный сундук: закрыт, пока пусто; открыт и наполняется золотом по мере накопления; полный — сверкает
+// сундук: закрыт, пока пусто; открыт с монетами; наполовину с самоцветами; полный — с россыпью и искрами
 function chestSvg(pct) {
-  const R = [];
-  const r = (x, y, w, h, c) => R.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`);
-  const WD = '#5A3522', WM = '#8A5A34', WL = '#B07A45', IR = '#34343E', IL = '#7A7A88', G1 = '#B9822E', G2 = '#E8B04A', G3 = '#F8DC80';
-  const open = pct > 0, full = pct >= 100;
-  // тело
-  r(3, 15, 26, 11, WM); r(3, 18, 26, 1, WD); r(3, 22, 26, 1, WD); r(3, 15, 26, 1, WL);
-  r(3, 25, 26, 2, IR); r(6, 15, 2, 11, IR); r(24, 15, 2, 11, IR); r(2, 15, 1, 12, IR); r(29, 15, 1, 12, IR);
-  if (!open) {
-    // закрытая крышка
-    r(5, 8, 22, 1, IR); r(4, 9, 24, 1, WD); r(3, 10, 26, 5, WM); r(4, 9, 24, 1, WL); r(3, 12, 26, 1, WD); r(3, 14, 26, 1, IR);
-    r(6, 9, 2, 6, IR); r(24, 9, 2, 6, IR); r(2, 10, 1, 5, IR); r(29, 10, 1, 5, IR);
-    r(14, 12, 4, 6, IL); r(15, 14, 2, 2, IR); r(15.5, 16, 1, 1, IR);
-  } else {
-    // откинутая крышка и внутренняя стенка
-    r(4, 3, 24, 1, IR); r(3, 4, 26, 6, WD); r(5, 5, 22, 4, '#3B2418'); r(6, 4, 2, 6, IR); r(24, 4, 2, 6, IR); r(3, 10, 26, 1, IR);
-    r(3, 11, 26, 4, '#2A1A10');
-    // золото: высота кучки по проценту
-    const h = Math.max(1, Math.round(1 + (pct / 100) * 6));
-    for (let k = 0; k < h; k++) { const y = 15 - k, inset = Math.max(0, k - (full ? 4 : 2)) * 2; r(3 + inset, y, 26 - inset * 2, 1, k % 2 ? G2 : G1); }
-    for (let k = 0; k < h; k += 2) { const y = 15 - k; r(6 + (k * 3) % 14, y, 2, 1, G3); r(18 - (k * 2) % 9, y, 1, 1, G3); }
-    if (pct >= 40) { r(10, 15 - Math.min(h - 1, 2), 2, 2, '#C83A4A'); r(19, 15 - Math.min(h - 1, 3), 2, 2, '#4CC3B0'); }
-    r(14, 16, 4, 4, IL); r(15, 17, 2, 2, IR);
-    if (full) { r(0, 25, 3, 2, G2); r(29, 24, 3, 3, G2); r(1, 24, 1, 1, G3); r(30, 23, 1, 1, G3); r(8, 1, 1, 3, G3); r(7, 2, 3, 1, G3); r(25, 0, 1, 3, G3); r(24, 1, 3, 1, G3); }
-  }
-  return `<svg class="chestsvg${full ? ' full' : ''}" viewBox="0 0 32 28" width="96" height="84" shape-rendering="crispEdges" aria-hidden="true">${R.join('')}</svg>`;
+  const st = pct <= 0 ? 0 : pct < 40 ? 1 : pct < 100 ? 2 : 3;
+  return `<img class="chestsvg" src="img/chest/${st}.png" alt="" width="112" height="112">`;
 }
 SCR.treasury = () => {
   const T = S.treasury;
