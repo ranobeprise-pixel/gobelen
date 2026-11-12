@@ -1171,6 +1171,7 @@ SCR.settings = () => {
     <span class="col grow" style="gap:1px"><span style="font-size:17px;font-weight:700">${r[0]}</span><span style="font-size:14px;color:var(--muted)">${r[1]}</span></span>${I.chev}</button>`).join('')}</div>
   <button data-a="go" data-to="safety" class="row mt-auto" style="min-height:58px;padding:8px 14px;border-radius:12px;background:var(--night2);color:#F1E9D8;border:none;text-align:left">${I.heart}
     <span class="col grow" style="gap:0"><span style="font-size:17px;font-weight:700">Если тяжело</span><span style="font-size:14px;color:#C9C3D6">Близкие люди и помощь, всегда под рукой</span></span></button>
+  ${authorCard()}
   <p class="small center" style="margin:0;color:var(--muted)">Версия от ${fmtDay(BUILD_DATE)} · ${BUILD.slice(0, 4)}</p>
   <p class="small center" style="margin:0;color:var(--muted)">Шрифты: Gatchina — Dimitri Antonov / Blue Curve Designstudio (CC BY 4.0), Brahms Gotisch — Sasha Pavljenko.</p>
 </div></div>`;
@@ -1197,6 +1198,13 @@ SCR.weavePick = () => `
     ${emblemHtml(l, 44)}<span class="col grow" style="gap:1px"><span style="font-size:17px;font-weight:700">${esc(landName(l))}</span><span style="font-size:14px;color:var(--muted)">${l.patterns.length ? l.patterns.map((p) => esc(p.name)).join(', ') : 'узоров пока нет'}</span></span>${I.chev}</button>`).join('')}</div>
 </div></div>`;
 
+// подпись автора; ссылку на сайт впишем, когда сайт будет на постоянном адресе
+const AUTHOR_URL = '';
+const authorCard = () => `<div class="authorcard">
+    <span class="goth" style="font-size:18px">Об авторе</span>
+    <span style="font-size:15px;line-height:1.4">«Гобелен пути» создала <b>Полина Окоемова</b> — психолог из Санкт-Петербурга. Я хотела планер, который не ругает за пропуски, а помогает замечать свой путь. Это дневник-ритуал для себя, а не терапия.</span>
+    ${AUTHOR_URL ? `<a class="link" href="${AUTHOR_URL}" target="_blank" rel="noopener" style="align-self:flex-start;padding:0">Обо мне и консультациях</a>` : ''}
+  </div>`;
 SCR.guide = () => {
   const H = HINTS();
   return `
@@ -1211,6 +1219,7 @@ SCR.guide = () => {
     <p style="margin:0">Если тебе долго тяжело, она не задаёт вопросов, а напоминает о близких и о помощи. Этот экран всегда есть в Котомке: «Если тяжело».</p></section>
   <section class="box col" style="gap:6px;font-size:15px;line-height:1.4"><span class="goth" style="font-size:20px">Главы</span>
     <p style="margin:0">Каждые шесть недель глава завершается: ты видишь, сколько было привалов и стежков, получаешь расклад из трёх карт и даёшь главе имя.</p></section>
+  ${authorCard()}
   <button class="btn ghost" data-a="hintsReset">Снова показывать подсказки на экранах</button>
 </div></div>`;
 };
@@ -1377,7 +1386,7 @@ function weaveBack() {
 A.weaveEdit = (d) => go('weave', { mode: 'edit', queue: [d.id], idx: 0, back: d.back });
 A.witchFreq = (d) => { S.settings.witchFreq = d.v; if (d.v === 'call' && S.witch.pending?.type !== 'safety') S.witch.pending = null; save(); toast('Сохранено'); render(); };
 A.callWitch = () => { callWitch(); save(); go('visit'); };
-A.hintsReset = () => { S.seen = {}; save(); toast('Подсказки снова появятся на экранах'); };
+A.hintsReset = () => { S.seen = {}; S.tours = {}; save(); toast('Подсказки снова появятся на экранах'); };
 
 // сундуки
 A.chestToggle = (d) => { const c = ui.chests[Number(d.i)]; c.on = !c.on; render(); };

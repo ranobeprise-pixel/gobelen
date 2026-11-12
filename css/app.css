@@ -233,3 +233,5 @@ canvas.amb.soft{image-rendering:auto;mix-blend-mode:screen}
 /* постоянные короткие подписи разделов */
 .tabbar button small{font-size:10px;line-height:1;opacity:.7;margin-top:-1px}
 .bagbtn small{font-size:9.5px;line-height:1;opacity:.75}
+/* подпись автора */
+.authorcard{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:14px;border:1px dashed var(--gold,#C9A24A);background:var(--card);text-align:left}
