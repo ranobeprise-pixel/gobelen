@@ -1,6 +1,10 @@
 // Звуки экранов, нарисованные кодом (Web Audio) — без файлов и лицензий.
 // Костёр на привале, пещера в сокровищнице, арфа и ветер на карте, птицы утром; короткие звуки стежка и находки.
 let ctx = null, master = null, scene = null, sceneName = null, enabled = false;
+// общая мелодия приложения: файл audio/theme.mp3 (если есть), играет по кругу и притихает на экранах с деталями
+const MUSIC_URL = 'audio/theme.mp3';
+const MUSIC_VOL = { fire: 0.22, morning: 0.32, map: 0.38, cave: 0.24, none: 0.5 };
+let music = null, musicGain = null, musicLoading = false;
 
 function ac() {
   if (!ctx) {
@@ -10,6 +14,7 @@ function ac() {
     try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { /* нет — не страшно */ }
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = 0.7; master.connect(ctx.destination);
+    musicGain = ctx.createGain(); musicGain.gain.value = 0; musicGain.connect(master);
   }
   if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
@@ -78,13 +83,20 @@ function every(sc, a, b, fn) {
 }
 
 const PENTA = [0, 3, 5, 7, 10, 12, 15];
+// протяжка нити: мягкий шорох, который поднимается вверх
+function thread(dest) {
+  const s = ctx.createBufferSource(); s.buffer = noise('white', 1);
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2.5;
+  const g = ctx.createGain(), t = ctx.currentTime, dur = 0.22 + Math.random() * 0.12;
+  f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(2600, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random() * 0.7, dur + 0.05);
+}
 const SCENES = {
   fire(sc, bus) {
     sc.src.push(loopNoise('brown', bus, 0.22, ['lowpass', 500]));
     every(sc, 40, 260, () => burst(bus, 0.01 + Math.random() * 0.03, 1500 + Math.random() * 3000, 0.05 + Math.random() * 0.25));
     every(sc, 1500, 4000, () => burst(bus, 0.06, 900, 0.35));
-    const lute = echo(bus, 0.33, 0.3, 0.3);
-    every(sc, 2600, 5200, () => pluck(lute, 57 + PENTA[Math.floor(Math.random() * PENTA.length)], 0.18));
   },
   cave(sc, bus) {
     sc.src.push(loopNoise('brown', bus, 0.12, ['lowpass', 260]));
@@ -93,10 +105,15 @@ const SCENES = {
     every(sc, 6000, 13000, () => { tone(room, 2600, 2550, 0.25, 0.08); tone(room, 3900, 3850, 0.18, 0.05, 'sine', 0.06); });
   },
   map(sc, bus) {
-    sc.src.push(loopNoise('white', bus, 0.035, ['bandpass', 420, 0.6]));
-    const harp = echo(bus, 0.38, 0.35, 0.35);
-    const scale = [60, 62, 64, 67, 69, 72, 74, 76];
-    every(sc, 900, 2200, () => pluck(harp, scale[Math.floor(Math.random() * scale.length)], 0.14));
+    // игла проходит через ткань: короткий «прокол» и протяжка нити
+    every(sc, 1800, 4200, () => {
+      const n = 1 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) {
+        const d = i * 0.42;
+        setTimeout(() => { if (scene) { burst(bus, 0.012, 3200, 0.12); } }, d * 1000);
+        setTimeout(() => { if (scene) { thread(bus); } }, d * 1000 + 70);
+      }
+    });
   },
   morning(sc, bus) {
     sc.src.push(loopNoise('white', bus, 0.025, ['bandpass', 600, 0.5]));
@@ -118,7 +135,25 @@ function stopScene(fade = 0.6) {
   }
 }
 
+async function startMusic() {
+  if (music || musicLoading || !ac()) return;
+  musicLoading = true;
+  try {
+    const res = await fetch(MUSIC_URL);
+    if (!res.ok) return;
+    const buf = await ctx.decodeAudioData(await res.arrayBuffer());
+    if (!enabled) return;
+    music = ctx.createBufferSource(); music.buffer = buf; music.loop = true; music.connect(musicGain); music.start();
+    duck(sceneName);
+  } catch (e) { /* файла нет или не прочитался — играют только детали */ } finally { musicLoading = false; }
+}
+function duck(name) {
+  if (!musicGain) return;
+  const t = ctx.currentTime, v = enabled ? (MUSIC_VOL[name] ?? MUSIC_VOL.none) : 0;
+  musicGain.gain.cancelScheduledValues(t); musicGain.gain.setValueAtTime(musicGain.gain.value, t); musicGain.gain.linearRampToValueAtTime(v, t + 1.5);
+}
 export function setScene(name) {
+  if (enabled && ctx) duck(SCENES[name] ? name : 'none');
   if (!enabled || !SCENES[name]) { if (!SCENES[name]) stopScene(); return; }
   if (name === sceneName) return;
   if (!ac()) return;
@@ -132,8 +167,8 @@ export function setScene(name) {
 
 export function setSound(on, name) {
   enabled = !!on;
-  if (!enabled) { stopScene(0.3); return; }
-  ac(); setScene(name);
+  if (!enabled) { stopScene(0.3); if (ctx) duck('none'); return; }
+  ac(); startMusic(); setScene(name); duck(SCENES[name] ? name : 'none');
 }
 export const soundEnabled = () => enabled;
 

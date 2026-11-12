@@ -1181,7 +1181,7 @@ SCR.settings = () => {
   <button data-a="go" data-to="safety" class="row mt-auto" style="min-height:58px;padding:8px 14px;border-radius:12px;background:var(--night2);color:#F1E9D8;border:none;text-align:left">${I.heart}
     <span class="col grow" style="gap:0"><span style="font-size:17px;font-weight:700">Если тяжело</span><span style="font-size:14px;color:#C9C3D6">Близкие люди и помощь, всегда под рукой</span></span></button>
   <button data-a="soundToggle" class="row" aria-pressed="${!!S.settings.sound}" style="min-height:58px;padding:8px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line2);text-align:left;color:inherit">
-    <span class="col grow" style="gap:1px"><span style="font-size:17px;font-weight:700">Звуки</span><span style="font-size:14px;color:var(--muted)">Костёр на привале, пещера, арфа на карте, птицы утром</span></span><span style="font-size:15px;font-weight:700;color:${S.settings.sound ? 'var(--rust)' : 'var(--muted)'}">${S.settings.sound ? 'вкл' : 'выкл'}</span></button>
+    <span class="col grow" style="gap:1px"><span style="font-size:17px;font-weight:700">Звуки</span><span style="font-size:14px;color:var(--muted)">Мелодия и детали: птицы утром, костёр вечером, стежки на гобелене, капли в пещере</span></span><span style="font-size:15px;font-weight:700;color:${S.settings.sound ? 'var(--rust)' : 'var(--muted)'}">${S.settings.sound ? 'вкл' : 'выкл'}</span></button>
   ${authorCard()}
   <p class="small center" style="margin:0;color:var(--muted)">Версия от ${fmtDay(BUILD_DATE)} · ${BUILD.slice(0, 4)}</p>
   <p class="small center" style="margin:0;color:var(--muted)">Шрифты: Gatchina — Dimitri Antonov / Blue Curve Designstudio (CC BY 4.0), Brahms Gotisch — Sasha Pavljenko.</p>
