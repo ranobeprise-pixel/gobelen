@@ -76,6 +76,8 @@ function render(top = false) {
   requestAnimationFrame(() => startAmbient($app));
   setScene(SOUND_SCENE[route]);
   const k = tourKey;
+  // памятка о музыке для тех, кто уже видел знакомство с привалом
+  if (route === 'evening' && S.tours?.evening && !S.tours?.soundtip) setTimeout(() => { if (route === 'evening' && !tourActive() && !S.tours.soundtip) startTour([{ sel: '[data-a="soundToggle"]', text: 'Здесь включается музыка и звуки костра. Выключить можно тут же или в Котомке. Если на телефоне беззвучный режим, звука не будет.' }], () => { S.tours.soundtip = true; save(); }); }, 700);
   if (k && !S.tours?.[k] && TOURS()[k] && !(route === 'map' && !S.firstDaySeen) && !(route === 'treasury' && S.treasury.setupPending)) setTimeout(() => { if (tourKey === k && !tourActive() && !S.tours?.[k]) runTour(k); }, 600);
 }
 window.addEventListener('resize', () => startAmbient($app));
@@ -229,6 +231,7 @@ const TOURS = () => ({
     { sel: '[data-to="settings"]', text: 'В котомке — настройки и копия записей. Всё хранится только на твоём телефоне.' },
   ],
   evening: [
+    { sel: '[data-a="soundToggle"]', text: 'Здесь включается музыка и звуки костра. Выключить можно тут же или в Котомке. Если на телефоне беззвучный режим, звука не будет.' },
     { sel: '[data-tour="energy"]', text: 'Как ты сейчас? Выбери луну: чем она полнее, тем больше сил.' },
     { sel: '[data-tour="sky"]', text: 'Небо — это настроение дня. Правильных ответов нет.' },
     { sel: '[data-tour="evlands"]', text: `Отметь земли, к которым сегодня был шаг. Не было — нажми «Просто день», так тоже можно.` },
@@ -264,7 +267,7 @@ const TOURS = () => ({
 function runTour(key) {
   const steps = TOURS()[key];
   if (!steps) return;
-  startTour(steps, () => { (S.tours ||= {})[key] = true; save(); });
+  startTour(steps, () => { (S.tours ||= {})[key] = true; if (key === 'evening') S.tours.soundtip = true; save(); });
 }
 
 function campRoute() {
