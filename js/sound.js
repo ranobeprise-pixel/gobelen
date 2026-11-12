@@ -102,7 +102,7 @@ const SCENES = {
   cave(sc, bus) {
     sc.src.push(loopNoise('brown', bus, 0.12, ['lowpass', 260]));
     const room = echo(bus, 0.42, 0.45, 0.5);
-    every(sc, 1400, 4200, () => { const f = 900 + Math.random() * 700; tone(room, f, f * 0.55, 0.07, 0.25); });
+    every(sc, 1400, 4200, () => { const f = 900 + Math.random() * 700; tone(room, f, f * 0.55, 0.07, 0.1); });
     every(sc, 6000, 13000, () => { tone(room, 2600, 2550, 0.25, 0.03); tone(room, 3900, 3850, 0.18, 0.018, 'sine', 0.06); });
   },
   map(sc, bus) {
