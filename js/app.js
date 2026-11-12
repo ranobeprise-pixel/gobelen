@@ -1202,7 +1202,7 @@ SCR.weavePick = () => `
 const AUTHOR_URL = '';
 const authorCard = () => `<div class="authorcard">
     <span class="goth" style="font-size:18px">Об авторе</span>
-    <span style="font-size:15px;line-height:1.4">«Гобелен пути» создала <b>Полина Окоемова</b> — психолог из Санкт-Петербурга. Я хотела планер, который не ругает за пропуски, а помогает замечать свой путь. Это дневник-ритуал для себя, а не терапия.</span>
+    <span style="font-size:15px;line-height:1.4">«Гобелен пути» создала <b>Полина Окоемова</b> — психолог из Санкт-Петербурга. Я долго искала планер, который показывает путь и дарит ощущение приключения от самого процесса. Так появился этот маленький ритуал — щепотка сказки в повседневности.</span>
     ${AUTHOR_URL ? `<a class="link" href="${AUTHOR_URL}" target="_blank" rel="noopener" style="align-self:flex-start;padding:0">Обо мне и консультациях</a>` : ''}
   </div>`;
 SCR.guide = () => {
