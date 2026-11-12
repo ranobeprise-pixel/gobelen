@@ -9,7 +9,7 @@
   --dark:#1F1611; --dline:#4A3628;
   --tre:#2A1D12; --tre2:#36261A; --tre3:#3E2C1C; --tline:#5C4632; --amber:#E8B04A; --tmuted:#C9B49A;
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
-  --tab:calc(64px + var(--safe-b));
+  --tab:calc(72px + var(--safe-b));
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;background:var(--dark)}
@@ -230,3 +230,6 @@ canvas.amb.soft{image-rendering:auto;mix-blend-mode:screen}
 .tourn{font-size:13px;color:#7A5A4A}
 .tournext{min-height:44px;padding:0 18px;border-radius:999px;border:none;background:#3B2418;color:#F7EBCB;font-size:15px;font-family:inherit}
 @media (prefers-reduced-motion:reduce){.tourhole{transition:none}}
+/* постоянные короткие подписи разделов */
+.tabbar button small{font-size:10px;line-height:1;opacity:.7;margin-top:-1px}
+.bagbtn small{font-size:9.5px;line-height:1;opacity:.75}

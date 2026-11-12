@@ -153,4 +153,5 @@ export function applyRegular() {
   return added;
 }
 export const cur = () => S.treasury.currency || '₽';
-export const money = (n) => Math.round(n).toLocaleString('ru-RU') + ' ' + cur();
+// суммы показываем как введены: с копейками, если они есть
+export const money = (n) => { const v = Math.round(n * 100) / 100; return v.toLocaleString('ru-RU', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' ' + cur(); };

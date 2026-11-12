@@ -265,9 +265,9 @@ function campRoute() {
 }
 
 function tabbar(active, night = false) {
-  const tabs = [['camp', 'Привал', I.fire], ['treasury', 'Сокровищница', I.chest], ['map', 'Карта', I.map], ['spells', 'Заклинания', I.book], ['journal', 'Летопись', I.scroll]];
-  return `<nav class="tabbar ${night ? 'nightbar' : ''}" aria-label="Разделы">${tabs.map(([id, label, ic]) =>
-    `<button data-a="tab" data-to="${id}" class="${active === id ? 'on' : ''}" ${active === id ? 'aria-current="page"' : ''}>${ic}${label}</button>`).join('')}</nav>`;
+  const tabs = [['camp', 'Привал', I.fire, 'отметки дня'], ['treasury', 'Сокровищница', I.chest, 'деньги'], ['map', 'Карта', I.map, 'цели'], ['spells', 'Заклинания', I.book, 'привычки'], ['journal', 'Летопись', I.scroll, 'дневник']];
+  return `<nav class="tabbar ${night ? 'nightbar' : ''}" aria-label="Разделы">${tabs.map(([id, label, ic, sub]) =>
+    `<button data-a="tab" data-to="${id}" class="${active === id ? 'on' : ''}" ${active === id ? 'aria-current="page"' : ''}>${ic}<span>${label}</span><small>${sub}</small></button>`).join('')}</nav>`;
 }
 
 // ——— картинка земли (эмблема или своя) ———
@@ -498,7 +498,7 @@ SCR.map = () => {
     <div class="col" style="gap:0;width:84px">${!firstDay ? helpBtn('map').replace('class="helpbtn"', 'class="helpbtn" style="color:#CDBFA8;width:30px;height:30px;flex-basis:30px;font-size:15px;margin-bottom:4px"') : ''}<span style="font-size:13px;color:#CDBFA8">${t.toLocaleDateString('ru-RU', { weekday: 'long' })}</span><span style="font-size:16px;color:#F3EBDD">${t.getDate()} ${MONTHS[t.getMonth()]}</span></div>
     <h1>Гобелен пути</h1>
     <div class="row" style="width:84px;justify-content:flex-end;gap:4px">
-      <button class="bagbtn" data-a="go" data-to="settings">${I.bag}<span>Котомка</span></button>
+      <button class="bagbtn" data-a="go" data-to="settings">${I.bag}<span>Котомка</span><small>настройки</small></button>
       <button data-a="moonInfo" aria-label="${weekMoonLabel()}" style="width:36px;height:44px;padding:0;border:none;background:none;display:inline-flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3a9 9 0 1 0 6 15A7.5 7.5 0 0 1 15 3z" fill="${mood() === 'up' ? '#E9C77B' : 'none'}" stroke="#E9C77B" stroke-width="2" stroke-linejoin="round"/></svg></button>
     </div>
   </header>
@@ -687,7 +687,7 @@ SCR.evening = () => {
   if (ui.energy === undefined) {
     // форма начинается заново; утренний узор подсказывает землю
     ui.energy = 2; ui.sky = 2; ui.lands = []; ui.pids = []; ui.note = '';
-    if (morn?.patternId) { const l = lands.find((q) => q.patterns.some((p) => p.id === morn.patternId)); if (l) { ui.lands = [l.id]; if (!dayDone.has(morn.patternId)) ui.pids = [morn.patternId]; } }
+    if (morn?.patternId && !dayDone.has(morn.patternId) && lands.some((q) => q.patterns.some((p) => p.id === morn.patternId))) ui.mornAsk = morn.patternId;
     for (const s of daySteps(td)) if (!ui.lands.includes(s.landId) && lands.some((l) => l.id === s.landId)) ui.lands.push(s.landId);
   }
   if (ui.done) return eveningDone();
@@ -719,6 +719,8 @@ SCR.evening = () => {
       <span class="small center" style="color:var(--nmuted)">${energyName(ui.energy)}</span></div>
     <div class="col" style="gap:6px" data-tour="sky"><span class="lbl">Небо над тобой</span>
       <div class="seg" style="grid-template-columns:repeat(5,minmax(0,1fr))">${SKIES.map((s, i) => `<button class="chip ${ui.sky === i ? 'on' : ''}" style="padding:4px 2px;border-radius:14px;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1" data-a="set" data-k="sky" data-v="${i}" aria-pressed="${ui.sky === i}">${s}<span style="font-size:11px;opacity:.8">${SKY_HINT[i]}</span></button>`).join('')}</div></div>
+    ${ui.mornAsk ? (() => { const ml = lands.find((q) => q.patterns.some((p) => p.id === ui.mornAsk)); const mp = ml.patterns.find((p) => p.id === ui.mornAsk); return `<div class="box col" style="gap:8px;border-color:var(--gold)"><span style="font-size:16px;line-height:1.35">Утром ты ${w('выбрала', 'выбрал')} «${esc(mp.name)}». Получилось?</span>
+      <div class="row"><button class="btn gold" style="min-height:44px;font-size:15px" data-a="mornAns" data-v="1">Да, получилось</button><button class="btn ghost" style="min-height:44px;font-size:15px" data-a="mornAns" data-v="0">Не сегодня</button></div></div>`; })() : ''}
     <div class="col" data-tour="evlands"><span class="lbl">Шаги дня — к каким землям?</span>
       <div style="display:grid;grid-template-columns:repeat(${Math.min(5, lands.length + 1)},minmax(0,1fr));gap:6px">
       ${lands.map((l) => { const on = ui.lands.includes(l.id); return `<button data-a="eveLand" data-v="${l.id}" aria-pressed="${on}" style="background:none;border:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px">${emblemHtml(l, 54, `box-sizing:border-box;border:3px solid ${on ? 'var(--pink)' : 'transparent'};opacity:${on ? 1 : 0.7}`)}${esc(landShort(l))}</button>`; }).join('')}
@@ -754,6 +756,7 @@ function morningDone(d, pat) {
 
 function eveningDone() {
   const n = ui.done.stitches;
+  const nudge = !S.settings.backupNudged && !S.settings.lastBackup;
   const pending = S.witch.pending;
   return `
 <div class="scr tabbed night">
@@ -763,6 +766,8 @@ function eveningDone() {
     ${!n && ui.done.dayStitches ? `<p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">Сегодняшние шаги уже в гобелене: ${stitchW(ui.done.dayStitches)} за день. Отдыхай — огонь присмотрит за дорогой.</p>` : ''}
     <p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">${ui.done.dayStitches && !n ? '' : n ? 'Стежки легли в гобелен. Отдыхай — огонь присмотрит за дорогой.' : 'Даже день без шагов — часть пути. Отдыхай.'}</p>
     ${pending ? `<button class="btn gold" data-a="go" data-to="visit">У костра тебя кто-то ждёт</button>` : ''}
+    ${nudge ? `<div class="box col" style="gap:8px;text-align:left;width:100%"><span style="font-size:15px;line-height:1.4">Твои записи хранятся только на этом телефоне — нигде больше. Сохрани копию, чтобы ничего не потерять: это минута.</span>
+      <div class="row"><button class="btn gold" style="min-height:44px;font-size:15px" data-a="nudgeBackup" data-v="1">Сохранить копию</button><button class="btn ghost" style="min-height:44px;font-size:15px" data-a="nudgeBackup" data-v="0">Позже</button></div></div>` : ''}
     <button class="btn ${pending ? 'ghost' : 'gold'}" data-a="go" data-to="map">${n ? 'Посмотреть, как легли стежки' : 'К гобелену'}</button>
   </div>
   ${tabbar('camp', true)}
@@ -866,7 +871,7 @@ SCR.treasury = () => {
     </div>` : '';
   return `
 <div class="scr tabbed tre">
-  <div style="position:relative" data-amb="coins" data-ambkey="coins" data-ambo='{"y0":0.35,"y1":0.85}'><img class="hero-img" src="img/scene/treasury.webp" alt="Пещера-сокровищница: сундуки с самоцветами, свечи" style="height:min(36vh,300px);object-position:center 66%"></div>
+  <div style="position:relative" data-amb="coins" data-ambkey="coins" data-ambo='{"y0":0.35,"y1":0.85}'><img class="hero-img" src="img/scene/treasury.webp" alt="Пещера-сокровищница: сундуки с самоцветами, свечи" style="height:min(22vh,170px);object-position:center 72%"></div>
   <div class="sheetup" style="background:var(--tre);padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px">
     <div class="row" style="justify-content:space-between"><h1 style="line-height:1">Сокровищница</h1>
       <span class="row" style="gap:8px"><button class="link" style="padding:4px 0;font-size:14px" data-a="hideSums">${hide ? 'Показать суммы' : 'Скрыть суммы'}</button>${helpBtn('treasury')}</span></div>
@@ -990,6 +995,8 @@ SCR.spells = () => {
   }).join('')}
   </div>
   ${ui.adding ? `<div class="box col">
+      <p class="small" style="margin:0;line-height:1.4">Заклинание — то, что повторяешь почти каждый день, как привычка. Разовые дела к цели («написать резюме») — это узоры земли.</p>
+      ${(() => { const nm = (ui.spName || '').trim().toLowerCase(); const hit = nm.length > 2 && activeLands().map((l) => [l, l.patterns.find((p) => p.name.trim().toLowerCase() === nm)]).find(([, p]) => p); return hit ? `<p class="small" style="margin:0;line-height:1.4;color:var(--rust)">«${esc(hit[1].name)}» уже есть узором земли «${esc(landShort(hit[0]))}». Можно отмечать там — тогда заклинание не нужно, чтобы не считать дважды.</p>` : ''; })()}
       <div class="row" style="flex-wrap:wrap;gap:6px">${SPELL_SEEDS.filter((x) => !S.spells.some((y) => y.name === x.name)).map((x) => `<button class="chip add" data-a="spellSeed" data-i="${SPELL_SEEDS.indexOf(x)}">+ ${x.name}</button>`).join('')}</div>
       <label class="col">Название заклинания<input id="spName" class="field" data-m="ui.spName" value="${esc(ui.spName || '')}" placeholder="Например: Движение"></label>
       <div class="col" style="gap:6px"><span class="lbl">Малое — на трудный день</span>
@@ -1515,6 +1522,12 @@ A.mornEdit = () => { const d = S.days[today()]?.morning; Object.assign(ui, { edi
 A.eveEdit = () => {
   const prev = S.days[today()]?.evening;
   Object.assign(ui, { editing: true, energy: prev.energy, sky: prev.sky, lands: (prev.landIds || (prev.landId ? [prev.landId] : [])).slice(), pids: (prev.patternIds || []).slice(), note: prev.note || '' });
+  render();
+};
+A.nudgeBackup = (d) => { S.settings.backupNudged = true; save(); if (d.v === '1') return go('backup'); render(); };
+A.mornAns = (d) => {
+  const pid = ui.mornAsk; ui.mornAsk = null;
+  if (d.v === '1') { const l = activeLands().find((q) => q.patterns.some((p) => p.id === pid)); if (l) { if (!ui.lands.includes(l.id)) ui.lands.push(l.id); if (!ui.pids.includes(pid)) ui.pids.push(pid); } }
   render();
 };
 A.evePat = (d) => { const i = ui.pids.indexOf(d.v); if (i >= 0) ui.pids.splice(i, 1); else ui.pids.push(d.v); render(); };
