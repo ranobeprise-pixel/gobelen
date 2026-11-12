@@ -928,7 +928,22 @@ SCR.treasury = () => {
     : '<p class="sub">Сундуков пока нет. Их можно завести в Котомке.</p>'}
     </div>
     <button data-a="toggle" data-k="treMore" aria-expanded="${!!ui.treMore}" class="row" style="justify-content:space-between;background:none;border:none;border-top:1px solid #4A3626;padding:10px 0 0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Ещё: постоянные траты, сверка кошеля</span><span style="font-size:13px;color:#C9B49A">${ui.treMore ? '▴' : '▾'}</span></button>
-    ${ui.treMore || ui.checking ? `${F2}${G}<button class="link" style="align-self:flex-start;padding:0;font-size:14px" data-a="go" data-to="tsetupEdit">Настроить сундуки и валюту</button>` : ''}
+    ${ui.treMore || ui.checking ? `    <div class="box col" style="gap:8px;padding:10px 12px">
+      ${ui.checking ? `<label class="row" style="font-size:14px;color:#D8C7AC">${T.wallet === null ? 'Сколько сейчас в кошеле?' : 'Сколько в кошеле на самом деле?'}<input class="field grow" style="height:44px" inputmode="decimal" data-m="ui.real" placeholder="${cur()}"></label>
+        <span style="font-size:14px;line-height:1.3">${T.wallet === null ? 'Сумма запомнится, и дальше траты будут вычитаться из неё.' : 'Разница уйдёт в «Рассыпано по дороге» с пометкой «не помню на что». Без упрёков.'}</span>
+        <div class="row"><button class="btn amber" style="min-height:42px;font-size:15px" data-a="walletCheck">Сверить</button><button class="btn ghost" style="min-height:42px;font-size:15px" data-a="toggle" data-k="checking">Отмена</button></div>`
+      : `<div class="row" style="justify-content:space-between"><span style="font-size:14px;line-height:1.3;color:#D8C7AC">${T.wallet === null ? 'Хочешь, чтобы приложение помнило, сколько в кошеле?' : 'Монет меньше, чем помнишь? Не помнишь, на что ушли?'}</span><button class="btn ghost" style="width:auto;min-height:44px;font-size:14px" data-a="toggle" data-k="checking">Сверить кошель</button></div>
+`}
+    </div>
+    <div class="box col" style="gap:8px;padding:10px 12px">
+      <button data-a="toggle" data-k="regOpen" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:inherit;text-align:left;min-height:44px"><span class="col" style="gap:0"><span style="font-size:15px;font-weight:700">Постоянные траты${T.regular.length ? ` · ${T.regular.length}` : ''}</span><span style="font-size:13px;color:#C9B49A">аренда, связь, подписки — запишутся сами как провизия</span></span><span style="font-size:20px">${ui.regOpen ? '−' : '+'}</span></button>
+      ${ui.regOpen ? `${T.regular.map((r) => `<div class="row" style="font-size:14px;justify-content:space-between"><span class="grow">${esc(r.name)} · ${r.day} числа</span><span>${hide ? '•••' : money(r.amount)}</span><button data-a="regDel" data-id="${r.id}" aria-label="Убрать постоянную трату" style="width:44px;height:44px;border:none;background:none;color:#C9B49A">${I.x}</button></div>`).join('')}
+        <input class="field" style="height:42px" data-m="ui.regName" value="${esc(ui.regName || '')}" placeholder="Что это, например: аренда">
+        <div class="row"><input class="field grow" style="height:42px" inputmode="decimal" data-m="ui.regAmt" value="${esc(ui.regAmt || '')}" placeholder="сумма, ${cur()}"><input class="field" style="height:42px;width:110px" inputmode="numeric" data-m="ui.regDay" value="${esc(ui.regDay || '')}" placeholder="число"></div>
+        <button class="btn amber" style="min-height:42px;font-size:15px" data-a="regAdd">Добавить постоянную трату</button>
+        <span style="font-size:13px;color:#C9B49A">Первая запись появится в ближайшее указанное число. То, что уже оплачено в этом месяце, не задвоится.</span>` : ''}
+    </div>
+    <button class="link" style="align-self:flex-start;padding:0;font-size:14px" data-a="go" data-to="tsetupEdit">Настроить сундуки и валюту</button>` : ''}
   </div>
   ${tabbar('treasury')}
 </div>`;
