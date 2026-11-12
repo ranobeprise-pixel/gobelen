@@ -214,3 +214,9 @@ canvas.amb.soft{image-rendering:auto;mix-blend-mode:screen}
 .shareov p{margin:0;font-size:15px}
 .shareov .btn.ghost{color:#F3EBDD;border:1px solid #8C7A5E;background:transparent}
 .shareov img{max-height:74vh}
+/* сундуки в Сокровищнице */
+.chestgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.chestcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px 12px;border-radius:12px;border:1px solid #4A3626;background:rgba(0,0,0,.18);color:inherit;text-align:center;min-height:44px}
+.chestcard.on{border-color:#E8B04A;box-shadow:0 0 0 1px #E8B04A}
+.chestsvg{image-rendering:pixelated}
+.chestsvg.full{filter:drop-shadow(0 0 8px rgba(232,176,74,.55))}
