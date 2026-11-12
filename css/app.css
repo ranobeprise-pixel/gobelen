@@ -19,7 +19,9 @@ input,textarea{font-size:16px}
 button{cursor:pointer}
 a{color:inherit;text-decoration:none}
 h1,.goth{font-family:'Brahms Gotisch',serif;font-weight:400}
-#app{max-width:440px;margin:0 auto;min-height:100dvh;position:relative;overflow-x:hidden}
+/* прокручивается только #app: так нижняя панель на iPhone не уезжает при пролистывании */
+html,body{height:100%;overflow:hidden}
+#app{max-width:440px;margin:0 auto;height:100dvh;position:relative;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
 
 .scr{min-height:100dvh;position:relative;display:flex;flex-direction:column}
 .scr.tabbed{padding-bottom:var(--tab)}
@@ -96,7 +98,7 @@ label.col{font-size:15px;color:var(--muted)}
 .goldbox{padding:12px 14px;border-radius:12px;background:#F7EBCB;border:1px solid #C9A24A}
 
 /* таббар */
-.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:440px;height:var(--tab);padding:6px 6px calc(4px + var(--safe-b));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;background:var(--dark);border-top:1px solid var(--dline);z-index:20}
+.tabbar{position:fixed;left:0;right:0;margin:0 auto;bottom:0;width:100%;max-width:440px;height:var(--tab);padding:6px 6px calc(4px + var(--safe-b));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;background:var(--dark);border-top:1px solid var(--dline);z-index:20}
 .tabbar.nightbar{background:#0E1226;border-color:#2A3260}
 .tabbar button{background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#CDBFA8;font-size:12px;white-space:nowrap;padding:0}
 .tabbar.nightbar button{color:#A9A3B8}

@@ -63,10 +63,10 @@ function go(r, params = {}, keepUi = false) {
   render(true);
 }
 function render(top = false) {
-  const y = window.scrollY;
+  const y = $app.scrollTop;
   const fn = SCR[route] || SCR.map;
   $app.innerHTML = fn();
-  window.scrollTo(0, top ? 0 : y);
+  $app.scrollTop = top ? 0 : y;
   if (ui.focus) { const el = document.getElementById(ui.focus); if (el) el.focus(); ui.focus = null; }
   if (route === 'map') animateStitches();
   requestAnimationFrame(() => startAmbient($app));
@@ -626,15 +626,19 @@ SCR.morning = () => {
 </div>`;
 };
 
+// шаги, отмеченные днём на земле: на привале их не считаем второй раз
+const daySteps = (td) => S.steps.filter((s) => s.date === td && s.src !== 'evening');
 SCR.evening = () => {
   const td = today();
+  const dayDone = new Set(daySteps(td).map((s) => s.patternId).filter(Boolean));
   const prev = S.days[td]?.evening;
   const morn = S.days[td]?.morning;
   const lands = activeLands();
   if (ui.energy === undefined) {
     // форма начинается заново; утренний узор подсказывает землю
     ui.energy = 2; ui.sky = 2; ui.lands = []; ui.pids = []; ui.note = '';
-    if (morn?.patternId) { const l = lands.find((q) => q.patterns.some((p) => p.id === morn.patternId)); if (l) { ui.lands = [l.id]; ui.pids = [morn.patternId]; } }
+    if (morn?.patternId) { const l = lands.find((q) => q.patterns.some((p) => p.id === morn.patternId)); if (l) { ui.lands = [l.id]; if (!dayDone.has(morn.patternId)) ui.pids = [morn.patternId]; } }
+    for (const s of daySteps(td)) if (!ui.lands.includes(s.landId) && lands.some((l) => l.id === s.landId)) ui.lands.push(s.landId);
   }
   if (ui.done) return eveningDone();
   const carried = S.witch.carried;
@@ -671,8 +675,11 @@ SCR.evening = () => {
       <button data-a="eveLand" data-v="none" aria-pressed="${!ui.lands.length}" style="background:none;border:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px"><span style="display:block;width:54px;height:54px;border-radius:50%;border:3px dashed ${!ui.lands.length ? 'var(--pink)' : '#3A4270'}"></span>Просто день</button>
       </div>
       <span class="small" style="color:var(--nmuted)">Можно выбрать несколько земель</span>
-      ${chosen.filter((l) => l.patterns.length).map((l) => `<div class="col" style="gap:4px"><span style="font-size:13px;color:var(--gold)">${esc(landShort(l))}</span><div class="row" style="flex-wrap:wrap;gap:6px">${l.patterns.map((p) => `<button class="chip gold ${ui.pids.includes(p.id) ? 'on' : ''}" data-a="evePat" data-v="${p.id}" aria-pressed="${ui.pids.includes(p.id)}">${esc(p.name)}</button>`).join('')}</div></div>`).join('')}
-      ${chosen.some((l) => l.patterns.length) ? '<span class="small" style="color:var(--nmuted)">Отметь, что именно сделано. Если ничего не отмечено, в землю ляжет один стежок</span>' : ''}
+      ${chosen.filter((l) => l.patterns.length).map((l) => `<div class="col" style="gap:4px"><span style="font-size:13px;color:var(--gold)">${esc(landShort(l))}</span><div class="row" style="flex-wrap:wrap;gap:6px">${l.patterns.map((p) => dayDone.has(p.id)
+        ? `<span class="chip gold on" style="display:inline-flex;align-items:center;opacity:.75" aria-label="${esc(p.name)}: уже отмечено днём">✓ ${esc(p.name)} · днём</span>`
+        : `<button class="chip gold ${ui.pids.includes(p.id) ? 'on' : ''}" data-a="evePat" data-v="${p.id}" aria-pressed="${ui.pids.includes(p.id)}">${esc(p.name)}</button>`).join('')}</div></div>`).join('')}
+      ${dayDone.size ? '<span class="small" style="color:var(--nmuted)">Отмеченное днём уже в гобелене — второй раз не считается</span>' : ''}
+      ${chosen.some((l) => l.patterns.length && !daySteps(td).some((q) => q.landId === l.id)) ? '<span class="small" style="color:var(--nmuted)">Отметь, что именно сделано. Если ничего не отмечено, в землю ляжет один стежок</span>' : ''}
     </div>
     <label class="col">Пара слов о дне (необязательно)<textarea class="field" rows="2" data-m="ui.note" placeholder="Что было важным сегодня?">${esc(ui.note)}</textarea></label>
     <button class="btn gold" data-a="eveningSave">Вплести в гобелен</button>
@@ -703,7 +710,8 @@ function eveningDone() {
   <div style="position:relative" data-amb="smoke embers fireflies" data-ambkey="fire2" data-ambo='${fireO()}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="" style="height:min(46vh,360px);object-position:center 74%"></div>
   <div class="pad nt" style="text-align:center;align-items:center;justify-content:center">
     <span class="goth" style="font-size:30px;color:var(--moon)">${n ? `+${stitchW(n)}` : 'Привал вплетён'}</span>
-    <p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">${n ? 'Стежки легли в гобелен. Отдыхай — огонь присмотрит за дорогой.' : 'Даже день без шагов — часть пути. Отдыхай.'}</p>
+    ${!n && ui.done.dayStitches ? `<p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">Сегодняшние шаги уже в гобелене: ${stitchW(ui.done.dayStitches)} за день. Отдыхай — огонь присмотрит за дорогой.</p>` : ''}
+    <p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">${ui.done.dayStitches && !n ? '' : n ? 'Стежки легли в гобелен. Отдыхай — огонь присмотрит за дорогой.' : 'Даже день без шагов — часть пути. Отдыхай.'}</p>
     ${pending ? `<button class="btn gold" data-a="go" data-to="visit">У костра тебя кто-то ждёт</button>` : ''}
     <button class="btn ${pending ? 'ghost' : 'gold'}" data-a="go" data-to="map">${n ? 'Посмотреть, как легли стежки' : 'К гобелену'}</button>
   </div>
@@ -1442,10 +1450,12 @@ A.eveningSave = () => {
   S.steps = S.steps.filter((s) => !(s.date === td && s.src === 'evening'));
   let n = 0;
   const chosen = ui.lands.map((id) => landOf(id)).filter(Boolean);
+  const day = daySteps(td);
+  const dayDone = new Set(day.map((s) => s.patternId).filter(Boolean));
   for (const l of chosen) {
-    const pats = l.patterns.filter((p) => ui.pids.includes(p.id));
+    const pats = l.patterns.filter((p) => ui.pids.includes(p.id) && !dayDone.has(p.id));
     if (pats.length) for (const p of pats) { n += addStep(l.id, p); S.steps[S.steps.length - 1].src = 'evening'; }
-    else { n += addStep(l.id, null); S.steps[S.steps.length - 1].src = 'evening'; }
+    else if (!day.some((s) => s.landId === l.id)) { n += addStep(l.id, null); S.steps[S.steps.length - 1].src = 'evening'; }
   }
   (S.days[td] ||= {}).evening = { energy: ui.energy, sky: ui.sky, landId: chosen[0]?.id || null, landIds: chosen.map((l) => l.id), patternIds: ui.pids.slice(), note: (ui.note || '').trim() };
   if (S.witch.carried) {
@@ -1455,7 +1465,7 @@ A.eveningSave = () => {
   }
   evaluateVisit(0);
   save();
-  ui = { done: { stitches: n } };
+  ui = { done: { stitches: n, dayStitches: day.reduce((a, s) => a + (s.stitches || 0), 0) } };
   reward();
   render(true);
 };
