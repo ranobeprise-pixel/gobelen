@@ -21,9 +21,10 @@ a{color:inherit;text-decoration:none}
 h1,.goth{font-family:'Brahms Gotisch',serif;font-weight:400}
 /* прокручивается только #app: так нижняя панель на iPhone не уезжает при пролистывании */
 html,body{height:100%;overflow:hidden}
-#app{max-width:440px;margin:0 auto;height:100dvh;position:relative;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+/* #app закреплён на весь экран: обходит ошибку iOS 26 с пустой полосой внизу у приложений с экрана «Домой» */
+#app{position:fixed;top:0;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
 
-.scr{min-height:100dvh;position:relative;display:flex;flex-direction:column}
+.scr{min-height:100%;position:relative;display:flex;flex-direction:column}
 .scr.tabbed{padding-bottom:var(--tab)}
 .pad{padding:calc(16px + var(--safe-t)) 20px 20px;display:flex;flex-direction:column;gap:14px;flex:1}
 .pad.nt{padding-top:16px}

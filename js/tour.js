@@ -1,6 +1,16 @@
 // Знакомство с экраном: затемняем всё, подсвечиваем один элемент и коротко говорим, зачем он.
 // steps: [{ sel, text }] — шаги без найденного элемента пропускаются.
 let active = null;
+// отступы выреза и полоски «домой» на iPhone
+let safeCache = null;
+function safe() {
+  if (safeCache) return safeCache;
+  const p = document.createElement('div');
+  p.style.cssText = 'position:fixed;top:0;left:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+  document.body.appendChild(p);
+  const cs = getComputedStyle(p); safeCache = [parseFloat(cs.paddingTop) || 0, parseFloat(cs.paddingBottom) || 0];
+  p.remove(); return safeCache;
+}
 
 export const tourActive = () => !!active;
 
@@ -26,9 +36,14 @@ export function startTour(steps, onDone) {
     const bw = Math.min(340, vw - 32);
     bub.style.width = bw + 'px';
     bub.style.left = Math.min(Math.max(16, r.left + r.width / 2 - bw / 2), vw - bw - 16) + 'px';
-    const below = r.top + r.height / 2 < vh / 2;
-    bub.style.top = below ? Math.min(top + h + 12, vh - bub.offsetHeight - 16) + 'px' : '';
-    bub.style.bottom = below ? '' : Math.min(vh - top + 12, vh - bub.offsetHeight - 16) + 'px';
+    // место для подсказки: где свободнее — над или под элементом; если не влезает нигде — поверх элемента у нижнего края
+    const [st, sb] = safe();
+    const bh = bub.offsetHeight, minTop = st + 12, maxBottom = vh - sb - 12;
+    const spaceAbove = top - minTop, spaceBelow = maxBottom - (top + h);
+    bub.style.bottom = '';
+    if (spaceBelow >= bh + 12) bub.style.top = top + h + 12 + 'px';
+    else if (spaceAbove >= bh + 12) bub.style.top = top - 12 - bh + 'px';
+    else bub.style.top = Math.max(minTop, maxBottom - bh - 70) + 'px';
   };
   const show = () => {
     const el = document.querySelector(list[i].sel);
