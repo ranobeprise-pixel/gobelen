@@ -1,5 +1,6 @@
 import { shareFind, shareCard, shareMap } from './share.js';
 import { startTour, tourActive, stopTour } from './tour.js';
+import { setSound, setScene, sfx } from './sound.js';
 import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING, OWN_GOALS, FINDS, RARITY, findImg } from './data.js';
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
   weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, cur, replaceAll, resetAll } from './store.js';
@@ -73,10 +74,16 @@ function render(top = false) {
   if (ui.focus) { const el = document.getElementById(ui.focus); if (el) el.focus(); ui.focus = null; }
   if (route === 'map') animateStitches();
   requestAnimationFrame(() => startAmbient($app));
+  setScene(SOUND_SCENE[route]);
   const k = tourKey;
   if (k && !S.tours?.[k] && TOURS()[k] && !(route === 'map' && !S.firstDaySeen) && !(route === 'treasury' && S.treasury.setupPending)) setTimeout(() => { if (tourKey === k && !tourActive() && !S.tours?.[k]) runTour(k); }, 600);
 }
 window.addEventListener('resize', () => startAmbient($app));
+// звуки экранов: какой фон у какого экрана
+const SOUND_SCENE = { evening: 'fire', morning: 'morning', treasury: 'cave', map: 'map' };
+// iPhone разрешает звук только после касания: включаем на первом нажатии
+let soundUnlocked = false;
+document.addEventListener('pointerdown', () => { if (!soundUnlocked && S?.settings?.sound) { soundUnlocked = true; setSound(true, SOUND_SCENE[route]); } }, true);
 // Игла проходит по эмблеме: новые стежки проявляются на гобелене
 function animateStitches() {
   const els = [...document.querySelectorAll('[data-anim-to]')];
@@ -151,6 +158,7 @@ function reward() {
     el.innerHTML = `<img class="findimg" src="${findImg(i)}" alt="" width="64" height="64"><span class="col" style="gap:1px"><span class="findlbl">${RARITY[rar].label.toUpperCase()}</span><b style="font-size:16px">${esc(FINDS[i][0])}</b><span style="font-size:13px;opacity:.85">${esc(FINDS[i][1])}</span></span>`;
     el.addEventListener('click', () => el.remove());
     document.body.appendChild(el);
+    sfx('find', rar);
     setTimeout(() => el.remove(), rar === 'm' ? 6500 : rar === 'r' ? 5200 : 4200);
   }, 900);
 }
@@ -699,6 +707,7 @@ SCR.evening = () => {
   return `
 <div class="scr tabbed night">
   <div style="position:relative" data-amb="smoke embers fireflies" data-ambkey="fire" data-ambo='${fireO()}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="${w('Странница', 'Странник')} отдыхает босиком у костра с кружкой чая" style="height:min(42vh,340px);object-position:center 74%">
+    <button data-a="soundToggle" aria-pressed="${!!S.settings.sound}" aria-label="${S.settings.sound ? 'Выключить звуки' : 'Включить звуки костра'}" style="position:absolute;left:12px;top:calc(12px + var(--safe-t));width:50px;height:50px;border-radius:50%;background:#0E1226;border:1px solid #3A4270;color:${S.settings.sound ? 'var(--gold)' : '#8C87A8'};font-size:22px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="17" cy="16" r="3" fill="currentColor"/>${S.settings.sound ? '' : '<path d="M3 3l18 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'}</svg></button>
     <div role="group" aria-label="Время дня" style="position:absolute;right:12px;top:calc(12px + var(--safe-t));display:flex;padding:3px;border-radius:999px;background:#0E1226;border:1px solid #3A4270">
       <button data-a="go" data-to="morning" style="height:44px;padding:0 16px;border-radius:999px;color:#F1E9D8;background:none;border:none;font-size:14px">Утро</button>
       <span aria-current="page" style="height:44px;padding:0 16px;border-radius:999px;background:var(--gold);color:var(--night);display:flex;align-items:center;font-size:14px">Вечер</span></div></div>
@@ -1171,6 +1180,8 @@ SCR.settings = () => {
     <span class="col grow" style="gap:1px"><span style="font-size:17px;font-weight:700">${r[0]}</span><span style="font-size:14px;color:var(--muted)">${r[1]}</span></span>${I.chev}</button>`).join('')}</div>
   <button data-a="go" data-to="safety" class="row mt-auto" style="min-height:58px;padding:8px 14px;border-radius:12px;background:var(--night2);color:#F1E9D8;border:none;text-align:left">${I.heart}
     <span class="col grow" style="gap:0"><span style="font-size:17px;font-weight:700">Если тяжело</span><span style="font-size:14px;color:#C9C3D6">Близкие люди и помощь, всегда под рукой</span></span></button>
+  <button data-a="soundToggle" class="row" aria-pressed="${!!S.settings.sound}" style="min-height:58px;padding:8px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line2);text-align:left;color:inherit">
+    <span class="col grow" style="gap:1px"><span style="font-size:17px;font-weight:700">Звуки</span><span style="font-size:14px;color:var(--muted)">Костёр на привале, пещера, арфа на карте, птицы утром</span></span><span style="font-size:15px;font-weight:700;color:${S.settings.sound ? 'var(--rust)' : 'var(--muted)'}">${S.settings.sound ? 'вкл' : 'выкл'}</span></button>
   ${authorCard()}
   <p class="small center" style="margin:0;color:var(--muted)">Версия от ${fmtDay(BUILD_DATE)} · ${BUILD.slice(0, 4)}</p>
   <p class="small center" style="margin:0;color:var(--muted)">Шрифты: Gatchina — Dimitri Antonov / Blue Curve Designstudio (CC BY 4.0), Brahms Gotisch — Sasha Pavljenko.</p>
@@ -1319,6 +1330,7 @@ A.shareCard = () => ui.card && shareSafe(() => shareCard(cardImg(ui.card), cardN
 A.shareMap = () => { const t = new Date(); shareSafe(() => shareMap(activeLands().filter((l) => l.slot != null && l.slot < 4).map((l) => ({ slot: l.slot, src: emblemSrc(l), pct: Math.round(landProgress(l) * 100), label: landShort(l), letter: (l.customName || '?')[0] })), EMBLEM_SLOTS, `${t.getDate()} ${MONTHS[t.getMonth()]}`)); };
 A.moonInfo = () => toast(`${weekMoonLabel()}. Луна загорается золотом, когда неделя ясная.`);
 A.tour = (d) => runTour(d.k);
+A.soundToggle = () => { S.settings.sound = !S.settings.sound; save(); soundUnlocked = true; setSound(S.settings.sound, SOUND_SCENE[route]); toast(S.settings.sound ? 'Звуки включены' : 'Звуки выключены'); render(); };
 A.findSel = (d) => { const i = +d.i; ui.findSel = ui.findSel === i ? null : i; render(); };
 A.toggle = (d) => { ui[d.k] = !ui[d.k]; if (d.focus) ui.focus = d.focus; render(); };
 
@@ -1447,6 +1459,7 @@ A.stepDo = (d) => {
   if (!d.force && last && last.at && Date.now() - last.at < 90000) { ui.confirmStep = p.id; return render(); }
   ui.confirmStep = null;
   const n = addStep(l.id, p);
+  sfx('stitch');
   S.steps[S.steps.length - 1].at = Date.now();
   save();
   toast(`+${stitchW(n)} вплетено в землю «${landShort(l)}»`);
@@ -1563,6 +1576,7 @@ A.eveningSave = () => {
   }
   evaluateVisit(0);
   save();
+  if (n) sfx('stitch');
   ui = { done: { stitches: n, dayStitches: day.reduce((a, s) => a + (s.stitches || 0), 0) } };
   reward();
   render(true);
