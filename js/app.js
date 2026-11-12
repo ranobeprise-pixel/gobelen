@@ -74,7 +74,7 @@ function render(top = false) {
   if (route === 'map') animateStitches();
   requestAnimationFrame(() => startAmbient($app));
   const k = tourKey;
-  if (k && !S.tours?.[k] && TOURS()[k] && !(route === 'map' && !S.firstDaySeen)) setTimeout(() => { if (tourKey === k && !tourActive() && !S.tours?.[k]) runTour(k); }, 600);
+  if (k && !S.tours?.[k] && TOURS()[k] && !(route === 'map' && !S.firstDaySeen) && !(route === 'treasury' && S.treasury.setupPending)) setTimeout(() => { if (tourKey === k && !tourActive() && !S.tours?.[k]) runTour(k); }, 600);
 }
 window.addEventListener('resize', () => startAmbient($app));
 // Игла проходит по эмблеме: новые стежки проявляются на гобелене
@@ -303,7 +303,7 @@ SCR.hero = () => {
   const card = (on) => `padding:8px 8px 12px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:10px;background:${on ? '#F6F1E6' : 'transparent'};border:2px solid ${on ? '#9A4A2A' : '#CBB99B'};width:100%`;
   return `
 <div class="scr paper"><div class="pad">
-  <div class="topbar">${backBtn(edit ? 'settings' : 'start')}<span class="step">${edit ? '' : 'шаг 1 из 4'}</span></div>
+  <div class="topbar">${backBtn(edit ? 'settings' : 'start')}<span class="step">${edit ? '' : 'шаг 1 из 3'}</span></div>
   <h1>Кто отправляется в путь?</h1>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <button data-a="pickHero" data-v="f" aria-pressed="${src.hero === 'f'}" style="${card(src.hero === 'f')}">
@@ -334,7 +334,7 @@ SCR.lands = () => {
   const counter = n === 0 ? 'Пока ничего не выбрано — отметь хотя бы одну землю' : n === 4 ? 'Выбрано 4 из 4 — чтобы заменить, сними отметку' : `Выбрано ${n} из 4`;
   return `
 <div class="scr paper"><div class="pad">
-  <div class="topbar">${backBtn(edit ? 'settings' : 'hero')}<span class="step">${edit ? '' : 'шаг 2 из 4'}</span></div>
+  <div class="topbar">${backBtn(edit ? 'settings' : 'hero')}<span class="step">${edit ? '' : 'шаг 2 из 3'}</span></div>
   <div class="row" style="align-items:flex-start">
     <div class="ava s56" role="img" aria-label="Странствующая"></div>
     <p class="box" style="margin:0;font-size:15px;line-height:1.35;padding:10px 12px">${edit ? 'Можно сменить земли. Снятая земля уснёт и сохранит свои стежки, к ней можно вернуться.' : 'Выбери до четырёх земель. Остальные подождут под тканью.'}</p>
@@ -385,10 +385,10 @@ SCR.weave = () => {
   const total = weeklyLoad(pats);
   const heavy = total > 12;
   const isLast = idx === queue.length - 1;
-  const nextLabel = P.mode === 'ob' ? (isLast ? 'Дальше: сундуки' : `Дальше: ${landShort(landById(queue[idx + 1]))}`) : (isLast ? 'Готово' : `Дальше: ${landShort(landById(queue[idx + 1]))}`);
+  const nextLabel = P.mode === 'ob' ? (isLast ? 'Вышить карту' : `Дальше: ${landShort(landById(queue[idx + 1]))}`) : (isLast ? 'Готово' : `Дальше: ${landShort(landById(queue[idx + 1]))}`);
   return `
 <div class="scr paper"><div class="pad">
-  <div class="topbar">${backBtn('weaveBack')}<span class="step">${P.mode === 'ob' ? `шаг 3 из 4 · земля ${idx + 1} из ${queue.length}` : queue.length > 1 ? `земля ${idx + 1} из ${queue.length}` : ''}</span></div>
+  <div class="topbar">${backBtn('weaveBack')}<span class="step">${P.mode === 'ob' ? `шаг 3 из 3 · земля ${idx + 1} из ${queue.length}` : queue.length > 1 ? `земля ${idx + 1} из ${queue.length}` : ''}</span></div>
   <div class="row">${emblemHtml(l, 56)}<div class="col" style="gap:0"><span class="step">Вшей узоры земли</span><h1 style="font-size:28px">${esc(landName(l))}</h1></div></div>
   ${def?.leads ? `<p class="sub" style="color:var(--ink)">${esc(def.about)}. ${esc(def.leads)}</p>` : ''}
   <p class="sub">Узоры — конкретные дела, из которых складывается путь сюда. Для каждого выбери, сколько сил он забирает и как часто ты хочешь его делать. Сделанный узор добавляет в землю стежки — так понемногу вышивается её эмблема.</p>
@@ -856,6 +856,14 @@ SCR.treasury = () => {
   const shares = [0, 1, 2].map((t) => (wkSum ? Math.round((sum(wk.filter((s) => s.tag === t)) / wkSum) * 100) : 0));
   const hide = T.hideSums;
   const recent = T.spends.slice(-6).reverse();
+  const setup = T.setupPending ? `<div class="box col" style="gap:10px;padding:14px;border-color:#E8B04A" data-tour="tsetup">
+      <span class="goth" style="font-size:22px;color:#E8C27A">Первый заход в сокровищницу</span>
+      <span style="font-size:15px;line-height:1.4;color:#D8C7AC">Сундуки на мечты уже собраны под твои земли — их видно внизу. Осталось два вопроса.</span>
+      <div class="row" style="justify-content:space-between"><span style="font-size:15px">В какой валюте считаем?</span><div class="row" style="gap:6px">${['₽', '$', '€'].map((c) => `<button class="tile ${(ui.cur || T.currency || '₽') === c ? 'on' : ''}" style="width:52px;min-height:44px;font-size:18px" data-a="setCur" data-v="${c}" aria-pressed="${(ui.cur || T.currency || '₽') === c}">${c}</button>`).join('')}</div></div>
+      <span style="font-size:15px">Как удобнее вести траты?</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${[[w('Вношу сама', 'Вношу сам'), 'каждую трату, в пару касаний'], ['Сверяю кошель', 'раз в неделю, без мелочей']].map((m, i) => `<button data-a="tmode" data-v="${i}" aria-pressed="${(ui.mode ?? T.mode ?? 0) === i}" style="min-height:76px;padding:10px;border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:4px;${(ui.mode ?? T.mode ?? 0) === i ? 'background:#E8B04A;color:#2A1D12;border:none' : 'background:transparent;color:inherit;border:1px solid #5C4632'}"><b style="font-size:15px">${m[0]}</b><span style="font-size:13px;opacity:.85">${m[1]}</span></button>`).join('')}</div>
+      <button class="btn amber" style="min-height:46px" data-a="tsetupDone">Готово</button>
+    </div>` : '';
   return `
 <div class="scr tabbed tre">
   <div style="position:relative" data-amb="coins" data-ambkey="coins" data-ambo='{"y0":0.35,"y1":0.85}'><img class="hero-img" src="img/scene/treasury.webp" alt="Пещера-сокровищница: сундуки с самоцветами, свечи" style="height:min(36vh,300px);object-position:center 66%"></div>
@@ -863,6 +871,7 @@ SCR.treasury = () => {
     <div class="row" style="justify-content:space-between"><h1 style="line-height:1">Сокровищница</h1>
       <span class="row" style="gap:8px"><button class="link" style="padding:4px 0;font-size:14px" data-a="hideSums">${hide ? 'Показать суммы' : 'Скрыть суммы'}</button>${helpBtn('treasury')}</span></div>
     <p class="sub" style="margin-top:-6px">Накопления, траты и кошель</p>
+    ${setup}
     ${hint('treasury')}
     <div class="box col ${ui.flash === 'wallet' ? 'flash' : ''}" style="gap:6px;padding:12px 14px" data-tour="wallet">
       ${T.wallet !== null ? `<div class="row" style="justify-content:space-between;align-items:baseline"><span style="font-size:15px;color:#D8C7AC">В кошеле${ui.flash === 'wallet' ? ' · запомнено' : ''}</span><span class="goth" style="font-size:30px;color:#E8C27A">${hide ? '•••' : money(T.wallet)}</span></div>
@@ -919,7 +928,7 @@ SCR.treasury = () => {
     : '<p class="sub">Сундуков пока нет. Их можно завести в Котомке.</p>'}
     </div>
     <button data-a="toggle" data-k="treMore" aria-expanded="${!!ui.treMore}" class="row" style="justify-content:space-between;background:none;border:none;border-top:1px solid #4A3626;padding:10px 0 0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Ещё: постоянные траты, сверка кошеля</span><span style="font-size:13px;color:#C9B49A">${ui.treMore ? '▴' : '▾'}</span></button>
-    ${ui.treMore || ui.checking ? `${F2}${G}` : ''}
+    ${ui.treMore || ui.checking ? `${F2}${G}<button class="link" style="align-self:flex-start;padding:0;font-size:14px" data-a="go" data-to="tsetupEdit">Настроить сундуки и валюту</button>` : ''}
   </div>
   ${tabbar('treasury')}
 </div>`;
@@ -1328,7 +1337,7 @@ A.weaveNext = () => {
   storePats();
   const idx = P.idx || 0;
   if (idx < P.queue.length - 1) return go('weave', { ...P, idx: idx + 1 });
-  if (P.mode === 'ob') return go('tsetup', { mode: 'ob' });
+  if (P.mode === 'ob') return A.obFinish();
   toast('Узоры вшиты');
   if (P.back) return go(P.back);
   if (P.queue.length === 1) return go('land', { id: P.queue[0] });
@@ -1354,6 +1363,7 @@ A.chestAdd = () => { const n = (ui.newChest || '').trim(); if (!n) return; ui.ch
 A.tmode = (d) => { ui.mode = Number(d.v); render(); };
 const cleanChests = () => ui.chests.filter((c) => c.on).map(({ id, name, why, goal, saved }) => ({ id, name, why, goal: Number(String(goal).replace(/\s/g, '')) || 0, saved: saved || 0 }));
 A.setCur = (d) => { ui.cur = d.v; render(); };
+A.tsetupDone = () => { const T = S.treasury; T.currency = ui.cur || T.currency || '₽'; T.mode = ui.mode ?? T.mode ?? 0; T.setupPending = false; save(); ui.cur = undefined; ui.mode = undefined; toast('Сокровищница готова'); render(); };
 A.tsetupSave = () => { S.treasury.chests = cleanChests(); S.treasury.mode = ui.mode; S.treasury.currency = ui.cur; save(); toast('Сундуки на месте'); go('treasury'); };
 A.obFinish = () => {
   const td = today();
@@ -1363,7 +1373,9 @@ A.obFinish = () => {
     const own = ob.customs.find((c) => c.id === id);
     return { id, customName: own ? own.name : null, art: own ? own.art : null, slot: i, tier: 1, stitches: 0, target: tierTarget(patterns), patterns, since: td, status: 'active' };
   });
-  S.treasury.chests = cleanChests(); S.treasury.mode = ui.mode; S.treasury.currency = ui.cur;
+  // деньги в онбординге не спрашиваем: сундуки собираем по землям, валюту и способ учёта спросим в Сокровищнице
+  S.treasury.chests = chestSuggestions(ob.picked).map(([name, why]) => ({ id: uid(), name, why, goal: 0, saved: 0 }));
+  S.treasury.mode = 0; S.treasury.currency = '₽'; S.treasury.setupPending = true;
   S.onboarded = true; S.created = td; S.firstDaySeen = false;
   save(); ob = null;
   go('map');
