@@ -153,7 +153,8 @@ function reward() {
   const rar = FINDS[i][2];
   S.finds.push({ date: td, i });
   save();
-  setTimeout(() => {
+  const showFind = () => {
+    if (tourActive()) return setTimeout(showFind, 800);
     document.querySelectorAll('.findcard').forEach((x) => x.remove());
     const el = document.createElement('div');
     el.className = 'findcard fc-' + rar; el.setAttribute('role', 'status');
@@ -162,7 +163,8 @@ function reward() {
     document.body.appendChild(el);
     sfx('find', rar);
     setTimeout(() => el.remove(), rar === 'm' ? 6500 : rar === 'r' ? 5200 : 4200);
-  }, 900);
+  };
+  setTimeout(showFind, 900);
 }
 // удаление с возможностью вернуть: снимок всего состояния до действия
 function withUndo(msg, fn) {
@@ -186,11 +188,11 @@ function HINTS() {
       'Утром можно отметить, как ' + w('проснулась', 'проснулся') + ', выбрать один узор на день и слово дня — ориентир, а не задачу.',
       'Выбранный узор сам подсветится вечером у костра. Сборы можно пропускать.']],
     land: ['Как устроена земля', [
-      '<b>Узоры</b> — дела, из которых складывается путь к этой земле. Нажми на кнопку рядом с узором, когда что-то сделано: в землю вплетутся стежки. Если нажала по ошибке, стежок можно убрать в списке «Последние стежки».',
+      `<b>Узоры</b> — дела, из которых складывается путь к этой земле. Нажми на кнопку рядом с узором, когда что-то сделано: в землю вплетутся стежки. Если ${w('нажала', 'нажал')} по ошибке, стежок можно убрать в списке «Последние стежки».`,
       'Когда стежков наберётся на всю эмблему, земля вышита. Тогда можно надстроить новый ярус или повесить её на стену Летописи.',
       '«Изменить узоры» — добавить, убрать, поменять нагрузку и частоту.']],
     treasury: ['Как устроена сокровищница', [
-      '<b>Сундуки</b> — накопления на цели: подушка, поездка, учёба. Это не ежемесячные конверты: деньги лежат в сундуке, пока ты сама не решишь их взять. Нажми на сундук, чтобы положить или взять.',
+      `<b>Сундуки</b> — накопления на цели: подушка, поездка, учёба. Это не ежемесячные конверты: деньги лежат в сундуке, пока ты ${w('сама', 'сам')} не решишь их взять. Нажми на сундук, чтобы положить или взять.`,
       'Каждая трата получает один из трёх видов: <b>Провизия</b> — необходимое и регулярное: аренда, продукты, проезд, связь. <b>Снаряжение</b> — то, что ты ценишь и во что вкладываешься. <b>Рассыпано</b> — на автопилоте или «не помню на что».',
       '<b>Конверты</b> — сколько ты разрешаешь себе потратить на что-то за месяц: кафе, такси. Выбираешь конверт при записи траты и видишь, сколько осталось. Каждый месяц конверты наполняются заново.',
       '<b>Постоянные траты</b> (аренда, подписки) можно завести один раз — они сами запишутся как провизия в свой день месяца.',
@@ -198,11 +200,11 @@ function HINTS() {
     spells: ['Как устроены заклинания', [
       'Заклинания — маленькие регулярные привычки: движение, чтение, вода, тишина.',
       'У каждого есть <b>малая</b> версия на трудный день и <b>великая</b> на хороший. Обе считаются возвращением к привычке.',
-      'Одно касание по малому или великому — и заклинание прочитано с обычным количеством. Если сделала больше или меньше, нажми «уточнить». Если заклинание привязано к земле, в неё вплетётся стежок: малое — 1, великое — 2.',
+      `Одно касание по малому или великому — и заклинание прочитано с обычным количеством. Если ${w('сделала', 'сделал')} больше или меньше, нажми «уточнить». Если заклинание привязано к земле, в неё вплетётся стежок: малое — 1, великое — 2.`,
       'Здесь не считают дни подряд — считают <b>возвращения</b>: каждый раз, когда ты ' + w('вернулась', 'вернулся') + ' к заклинанию после паузы.']],
     journal: ['Как устроена летопись', [
       'Сюда само собой складывается всё: утро, привалы, шаги, ответы Странствующей и карты. «Записать» — добавить свою запись.',
-      '<b>Колода Пути</b> — 22 карты с вопросами. Одну карту в неделю можно вытянуть самой, иногда её приносит Странствующая.',
+      `<b>Колода Пути</b> — 22 карты с вопросами. Одну карту в неделю можно вытянуть ${w('самой', 'самому')}, иногда её приносит Странствующая.`,
       '<b>Нити наблюдений</b> — повторы, которые приложение заметило в записях. Это только факты и вопросы, никаких выводов о тебе: смысл решаешь ты.']]
   };
 }
@@ -698,7 +700,7 @@ SCR.evening = () => {
   if (ui.energy === undefined) {
     // форма начинается заново; утренний узор подсказывает землю
     ui.energy = 2; ui.sky = 2; ui.lands = []; ui.pids = []; ui.note = '';
-    if (morn?.patternId && !dayDone.has(morn.patternId) && lands.some((q) => q.patterns.some((p) => p.id === morn.patternId))) ui.mornAsk = morn.patternId;
+    if (!prev && morn?.patternId && !dayDone.has(morn.patternId) && lands.some((q) => q.patterns.some((p) => p.id === morn.patternId))) ui.mornAsk = morn.patternId;
     for (const s of daySteps(td)) if (!ui.lands.includes(s.landId) && lands.some((l) => l.id === s.landId)) ui.lands.push(s.landId);
   }
   if (ui.done) return eveningDone();
@@ -759,7 +761,7 @@ function morningDone(d, pat) {
   <div style="position:relative" data-amb="motes" data-ambkey="dawn2" data-ambo='{"c":"#FFF1C4","n":18}'><img class="hero-img" src="img/scene/morning_${S.hero}.webp" alt="" style="height:min(46vh,360px);object-position:center 72%"></div>
   <div class="pad nt" style="text-align:center;align-items:center;justify-content:center">
     <span class="goth" style="font-size:30px;color:#A3462F">В путь!</span>
-    <p style="margin:0;font-size:17px;line-height:1.4">${d?.word ? `Слово дня — «${esc(d.word)}».` : 'Хорошей дороги.'}${pat ? `<br>Узор на сегодня: ${esc(pat.name)}. Вечером у костра он будет уже отмечен.` : ''}</p>
+    <p style="margin:0;font-size:17px;line-height:1.4">${d?.word ? `Слово дня — «${esc(d.word)}».` : 'Хорошей дороги.'}${pat ? `<br>Узор на сегодня: ${esc(pat.name)}. Вечером у костра спрошу, получилось ли.` : ''}</p>
     <button class="btn dawnb" data-a="go" data-to="map">К гобелену</button>
   </div>
   ${tabbar('camp')}
@@ -774,9 +776,9 @@ function eveningDone() {
 <div class="scr tabbed night">
   <div style="position:relative" data-amb="smoke embers fireflies" data-ambkey="fire2" data-ambo='${fireO()}'><img class="hero-img" src="img/scene/rest_${S.hero}.webp" alt="" style="height:min(46vh,360px);object-position:center 74%"></div>
   <div class="pad nt" style="text-align:center;align-items:center;justify-content:center">
-    <span class="goth" style="font-size:30px;color:var(--moon)">${n ? `+${stitchW(n)}` : 'Привал вплетён'}</span>
+    <span class="goth" style="font-size:30px;color:var(--moon)">${n ? `+${stitchW(n)}` : ui.done.edited ? 'Привал поправлен' : 'Привал вплетён'}</span>
     ${!n && ui.done.dayStitches ? `<p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">Сегодняшние шаги уже в гобелене: ${stitchW(ui.done.dayStitches)} за день. Отдыхай — огонь присмотрит за дорогой.</p>` : ''}
-    <p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">${ui.done.dayStitches && !n ? '' : n ? 'Стежки легли в гобелен. Отдыхай — огонь присмотрит за дорогой.' : 'Даже день без шагов — часть пути. Отдыхай.'}</p>
+    <p style="margin:0;font-size:17px;line-height:1.4;color:var(--lav)">${(ui.done.dayStitches || ui.done.edited) && !n ? (ui.done.edited && !ui.done.dayStitches ? 'Изменения сохранены. Отдыхай — огонь присмотрит за дорогой.' : '') : n ? 'Стежки легли в гобелен. Отдыхай — огонь присмотрит за дорогой.' : 'Даже день без шагов — часть пути. Отдыхай.'}</p>
     ${pending ? `<button class="btn gold" data-a="go" data-to="visit">У костра тебя кто-то ждёт</button>` : ''}
     ${nudge ? `<div class="box col" style="gap:8px;text-align:left;width:100%"><span style="font-size:15px;line-height:1.4">Твои записи хранятся только на этом телефоне — нигде больше. Сохрани копию, чтобы ничего не потерять: это минута.</span>
       <div class="row"><button class="btn gold" style="min-height:44px;font-size:15px" data-a="nudgeBackup" data-v="1">Сохранить копию</button><button class="btn ghost" style="min-height:44px;font-size:15px" data-a="nudgeBackup" data-v="0">Позже</button></div></div>` : ''}
@@ -941,7 +943,7 @@ SCR.treasury = () => {
         <span style="font-size:15px;line-height:1.2">${esc(c.name)}</span>
         <span style="font-size:13px;color:#E8C27A;line-height:1.2">${val}</span></button>`;
     }).join('')}</div>
-    ${T.chests.some((c) => c.id === ui.chest) ? `<div class="col" style="gap:6px"><span style="font-size:14px;color:#D8C7AC">${esc(T.chests.find((c) => c.id === ui.chest).name)}</span><div class="row"><input class="field grow" style="height:44px" inputmode="numeric" data-m="ui.chestAmt" placeholder="${cur()}" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div></div>` : ''}`
+    ${T.chests.some((c) => c.id === ui.chest) ? `<div class="col" style="gap:6px"><span style="font-size:14px;color:#D8C7AC">${esc(T.chests.find((c) => c.id === ui.chest).name)}</span><div class="row"><input class="field grow" style="height:44px" inputmode="decimal" data-m="ui.chestAmt" placeholder="${cur()}" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div></div>` : ''}`
     : '<p class="sub">Сундуков пока нет. Их можно завести в Котомке.</p>'}
     </div>
     <button data-a="toggle" data-k="treMore" aria-expanded="${!!ui.treMore}" class="row" style="justify-content:space-between;background:none;border:none;border-top:1px solid #4A3626;padding:10px 0 0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Ещё: постоянные траты, сверка кошеля</span><span style="font-size:13px;color:#C9B49A">${ui.treMore ? '▴' : '▾'}</span></button>
@@ -1008,7 +1010,7 @@ SCR.spells = () => {
   </div>
   ${ui.adding ? `<div class="box col">
       <p class="small" style="margin:0;line-height:1.4">Заклинание — то, что повторяешь почти каждый день, как привычка. Разовые дела к цели («написать резюме») — это узоры земли.</p>
-      ${(() => { const nm = (ui.spName || '').trim().toLowerCase(); const hit = nm.length > 2 && activeLands().map((l) => [l, l.patterns.find((p) => p.name.trim().toLowerCase() === nm)]).find(([, p]) => p); return hit ? `<p class="small" style="margin:0;line-height:1.4;color:var(--rust)">«${esc(hit[1].name)}» уже есть узором земли «${esc(landShort(hit[0]))}». Можно отмечать там — тогда заклинание не нужно, чтобы не считать дважды.</p>` : ''; })()}
+      <p id="spWarn" class="small" style="margin:0;line-height:1.4;color:var(--rust)">${spellWarn(ui.spName)}</p>
       <div class="row" style="flex-wrap:wrap;gap:6px">${SPELL_SEEDS.filter((x) => !S.spells.some((y) => y.name === x.name)).map((x) => `<button class="chip add" data-a="spellSeed" data-i="${SPELL_SEEDS.indexOf(x)}">+ ${x.name}</button>`).join('')}</div>
       <label class="col">Название заклинания<input id="spName" class="field" data-m="ui.spName" value="${esc(ui.spName || '')}" placeholder="Например: Движение"></label>
       <div class="col" style="gap:6px"><span class="lbl">Малое — на трудный день</span>
@@ -1220,6 +1222,12 @@ const authorCard = () => `<div class="authorcard">
     <span style="font-size:15px;line-height:1.4">«Гобелен пути» создала <b>Полина Окоемова</b> — психолог из Санкт-Петербурга. Я долго искала планер, который показывает путь и дарит ощущение приключения от самого процесса. Так появился этот маленький ритуал — щепотка сказки в повседневности.</span>
     ${AUTHOR_URL ? `<a class="link" href="${AUTHOR_URL}" target="_blank" rel="noopener" style="align-self:flex-start;padding:0">Обо мне и консультациях</a>` : ''}
   </div>`;
+// если такое дело уже есть узором земли — подсказать, чтобы не считать дважды
+function spellWarn(name) {
+  const nm = (name || '').trim().toLowerCase();
+  const hit = nm.length > 2 && activeLands().map((l) => [l, l.patterns.find((p) => p.name.trim().toLowerCase() === nm)]).find(([, p]) => p);
+  return hit ? `«${esc(hit[1].name)}» уже есть узором земли «${esc(landShort(hit[0]))}». Можно отмечать там — тогда заклинание не нужно, чтобы не считать дважды.` : '';
+}
 SCR.guide = () => {
   const H = HINTS();
   return `
@@ -1554,6 +1562,7 @@ A.nudgeBackup = (d) => { S.settings.backupNudged = true; save(); if (d.v === '1'
 A.mornAns = (d) => {
   const pid = ui.mornAsk; ui.mornAsk = null;
   if (d.v === '1') { const l = activeLands().find((q) => q.patterns.some((p) => p.id === pid)); if (l) { if (!ui.lands.includes(l.id)) ui.lands.push(l.id); if (!ui.pids.includes(pid)) ui.pids.push(pid); } }
+  else ui.pids = ui.pids.filter((x) => x !== pid);
   render();
 };
 A.evePat = (d) => { const i = ui.pids.indexOf(d.v); if (i >= 0) ui.pids.splice(i, 1); else ui.pids.push(d.v); render(); };
@@ -1561,6 +1570,7 @@ A.eveningSave = () => {
   const td = today();
   // если привал уже был — заменяем вечерние стежки
   const old = S.steps.filter((s) => s.date === td && s.src === 'evening');
+  const oldSum = old.reduce((a, s) => a + (s.stitches || 0), 0), edited = !!S.days[td]?.evening;
   for (const s of old) { const l = landOf(s.landId); if (l && l.tier === s.tier) l.stitches = Math.max(0, l.stitches - s.stitches); }
   S.steps = S.steps.filter((s) => !(s.date === td && s.src === 'evening'));
   let n = 0;
@@ -1581,7 +1591,7 @@ A.eveningSave = () => {
   evaluateVisit(0);
   save();
   if (n) sfx('stitch');
-  ui = { done: { stitches: n, dayStitches: day.reduce((a, s) => a + (s.stitches || 0), 0) } };
+  ui = { done: { edited, stitches: edited ? Math.max(0, n - oldSum) : n, dayStitches: day.reduce((a, s) => a + (s.stitches || 0), 0) } };
   reward();
   render(true);
 };
@@ -1654,7 +1664,7 @@ A.walletCheck = () => {
   if (!String(ui.real || '').trim()) return toast('Сколько в кошеле?');
   if (T.wallet === null) { T.wallet = real; toast(`Запомнено: в кошеле ${money(real)}`); }
   else {
-    const diff = Math.round(T.wallet - real);
+    const diff = Math.round((T.wallet - real) * 100) / 100;
     if (diff > 0) { T.spends.push({ id: uid(), date: today(), amount: diff, note: 'не помню на что', tag: 2 }); toast(`${money(diff)} — рассыпано по дороге. Бывает.`); }
     else if (diff < 0) toast(`В кошеле на ${money(-diff)} больше, чем было записано`);
     else toast('Всё сходится');
@@ -1797,6 +1807,7 @@ document.addEventListener('input', (e) => {
   else if (root === 'ob') ob[key] = e.target.value;
   else if (root === 'chest') ui.chests[Number(key)].goal = e.target.value;
   if (e.target.tagName === 'SELECT') render();
+  if (e.target.id === 'spName') { const w = document.getElementById('spWarn'); if (w) w.innerHTML = spellWarn(e.target.value); }
 });
 document.addEventListener('change', async (e) => {
   if (e.target.id !== 'restoreFile' || !e.target.files[0]) return;
