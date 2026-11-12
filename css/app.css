@@ -219,3 +219,13 @@ canvas.amb.soft{image-rendering:auto;mix-blend-mode:screen}
 .chestcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px 12px;border-radius:12px;border:1px solid #4A3626;background:rgba(0,0,0,.18);color:inherit;text-align:center;min-height:44px}
 .chestcard.on{border-color:#E8B04A;box-shadow:0 0 0 1px #E8B04A}
 .chestsvg{width:112px;height:112px;margin:-6px 0 -4px}
+/* знакомство с экраном: подсветка элемента и короткая подсказка */
+.tourblock{position:fixed;inset:0;z-index:100;background:transparent}
+.tourhole{position:fixed;z-index:101;border-radius:14px;box-shadow:0 0 0 9999px rgba(12,8,6,.72),0 0 0 2px #E9C77B inset,0 0 18px rgba(233,199,123,.55);pointer-events:none;transition:top .25s ease,left .25s ease,width .25s ease,height .25s ease}
+.tourbub{position:fixed;z-index:102;background:#F7EBCB;color:#3B2418;border:1px solid #C9A24A;border-radius:14px;padding:14px 16px 10px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:16px;line-height:1.4}
+.tourbub p{margin:0 0 8px}
+.tourrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tourskip{background:none;border:none;color:#7A5A4A;font-size:14px;min-height:44px;padding:0 4px;font-family:inherit}
+.tourn{font-size:13px;color:#7A5A4A}
+.tournext{min-height:44px;padding:0 18px;border-radius:999px;border:none;background:#3B2418;color:#F7EBCB;font-size:15px;font-family:inherit}
+@media (prefers-reduced-motion:reduce){.tourhole{transition:none}}

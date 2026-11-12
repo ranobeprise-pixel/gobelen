@@ -1,4 +1,5 @@
 import { shareFind, shareCard, shareMap } from './share.js';
+import { startTour, tourActive, stopTour } from './tour.js';
 import { LANDS, EMBLEM_SLOTS, LOADS, LOAD_HINT, FREQS, SKY_HINT, ENERGY, ENERGY_M, SKIES, WAKES, TAGS, SPELL_SEEDS, UNITS, CARDS, FIRST_GREETING, OWN_GOALS, FINDS, RARITY, findImg } from './data.js';
 import { S, save, dayKey, addDays, daysBetween, parseDay, uid, landDef, landOf, landName, landShort, emblemSrc, sceneSrc, lookOf, applyRegular,
   weeklyLoad, tierTarget, activeLands, addStep, landProgress, spellStats, money, cur, replaceAll, resetAll } from './store.js';
@@ -65,11 +66,15 @@ function go(r, params = {}, keepUi = false) {
 function render(top = false) {
   const y = $app.scrollTop;
   const fn = SCR[route] || SCR.map;
+  tourKey = null;
+  if (tourActive()) stopTour();
   $app.innerHTML = fn();
   $app.scrollTop = top ? 0 : y;
   if (ui.focus) { const el = document.getElementById(ui.focus); if (el) el.focus(); ui.focus = null; }
   if (route === 'map') animateStitches();
   requestAnimationFrame(() => startAmbient($app));
+  const k = tourKey;
+  if (k && !S.tours?.[k] && TOURS()[k] && !(route === 'map' && !S.firstDaySeen)) setTimeout(() => { if (tourKey === k && !tourActive() && !S.tours?.[k]) runTour(k); }, 600);
 }
 window.addEventListener('resize', () => startAmbient($app));
 // Игла проходит по эмблеме: новые стежки проявляются на гобелене
@@ -200,14 +205,59 @@ const SHORT = () => ({
   spells: ['Маленькие привычки. Малое — на трудный день, великое — на хороший, засчитываются оба. Считаются не дни подряд, а возвращения.'],
   journal: ['Сюда само собой складывается всё, что было на пути. Раз в неделю можно вытянуть карту с вопросами.']
 });
+// тексты-подсказки заменены знакомством с подсветкой; hint() оставлен пустым, чтобы не трогать экраны
+let tourKey = null;
 function hint(key) {
-  if (S.seen?.[key] && !ui.hint) return '';
-  const title = HINTS()[key][0];
-  const ps = SHORT()[key];
-  return `<div class="hintbox" role="note"><span class="goth" style="font-size:20px">${title}</span>${ps.map((x) => `<p>${x}</p>`).join('')}
-    <button class="btn" style="min-height:44px;font-size:15px" data-a="hintOk" data-k="${key}">Понятно</button></div>`;
+  tourKey = key;
+  return '';
 }
-const helpBtn = (key) => (S.seen?.[key] && !ui.hint ? `<button class="helpbtn" data-a="toggle" data-k="hint" aria-label="Как это устроено">?</button>` : '');
+const helpBtn = (key) => { tourKey = key; return `<button class="helpbtn" data-a="tour" data-k="${key}" aria-label="Показать, как здесь всё устроено">?</button>`; };
+// короткие разговорные подсказки к элементам экрана
+const TOURS = () => ({
+  map: [
+    { sel: '.mapwrap', text: `Это твой гобелен. Каждая эмблема — земля, то, что для тебя сейчас важно: работа, здоровье, творчество.` },
+    { sel: '.slot', text: `Нажми на землю — там её дела и цель. ${w('Сделала', 'Сделал')} дело — эмблема чуть проявится цветом.` },
+    { sel: '.tabbar', text: 'Внизу всё остальное: вечерний привал, деньги, привычки и Летопись твоего пути.' },
+    { sel: '[data-to="settings"]', text: 'В котомке — настройки и копия записей. Всё хранится только на твоём телефоне.' },
+  ],
+  evening: [
+    { sel: '[data-tour="energy"]', text: 'Как ты сейчас? Выбери луну: чем она полнее, тем больше сил.' },
+    { sel: '[data-tour="sky"]', text: 'Небо — это настроение дня. Правильных ответов нет.' },
+    { sel: '[data-tour="evlands"]', text: `Отметь земли, к которым сегодня был шаг. Не было — нажми «Просто день», так тоже можно.` },
+    { sel: '[data-a="eveningSave"]', text: 'И всё, полминуты. Пропущенные вечера ничего не сбрасывают.' },
+  ],
+  morning: [
+    { sel: '[data-tour="wake"]', text: `${w('Как ты проснулась?', 'Как ты проснулся?')} Просто отметь, без оценок.` },
+    { sel: '[data-tour="daypat"]', text: 'Выбери одно дело на сегодня. Лучше маленькое — чтобы точно получилось.' },
+    { sel: '[data-a="morningSave"]', text: 'Готово — и в путь. Утро можно пропускать.' },
+  ],
+  land: [
+    { sel: '[data-a="stepDo"]', text: `${w('Сделала', 'Сделал')} что-то из этого? Нажми — и в землю лягут стежки, эмблема станет ярче.` },
+    { sel: '[data-a="goalOpen"], [data-tour="goal"]', text: 'Цель — куда ты идёшь. Задай её просто: что, сколько и к какому сроку.' },
+    { sel: '[data-a="weaveEdit"]', text: 'Дела земли можно поменять в любой момент.' },
+  ],
+  treasury: [
+    { sel: '[data-tour="wallet"]', text: 'Здесь видно, сколько у тебя в кошеле. Пришли деньги — нажми «Пришли монеты».' },
+    { sel: '[data-tour="spend"]', text: 'Потратила — запиши сумму и выбери вид траты. Можно без подробностей.'.replace('Потратила', w('Потратила', 'Потратил')) },
+    { sel: '.chestgrid', text: 'Сундуки — накопления на мечты. Чем больше отложено, тем больше в сундуке золота.' },
+    { sel: '[data-k="treMore"]', text: 'Постоянные траты и сверка кошеля спрятаны здесь, чтобы не мешать каждый день.' },
+  ],
+  spells: [
+    { sel: '[data-a="castOpen"]', text: 'Заклинания — маленькие привычки. Нажми, когда сделала, и это засчитается.'.replace('сделала', w('сделала', 'сделал')) },
+    { sel: '[data-k="adding"]', text: 'Добавь свою привычку. Малая версия — на трудный день, великая — на хороший.' },
+  ],
+  journal: [
+    { sel: '.entry', text: 'Сюда само складывается всё: шаги, привалы, ответы. Это история твоего пути.' },
+    { sel: '.fab', text: 'Хочешь записать мысль — нажми сюда.' },
+    { sel: '[data-to="card"]', text: 'Раз в неделю можно вытянуть карту — с вопросом к себе.' },
+    { sel: '[data-k="findsOpen"]', text: 'А это твои находки: маленький подарок за каждый день в пути. Собери коллекцию.' },
+  ],
+});
+function runTour(key) {
+  const steps = TOURS()[key];
+  if (!steps) return;
+  startTour(steps, () => { (S.tours ||= {})[key] = true; save(); });
+}
 
 function campRoute() {
   const d = S.days[today()];
@@ -613,9 +663,9 @@ SCR.morning = () => {
       <button class="btn ghost" style="min-height:44px;font-size:15px" data-a="mornEdit">Поправить утренние сборы</button></div>` : ''}
     <div class="col ${d && !ui.editing ? 'hide' : ''}" style="gap:14px">
     ${hint('morning')}
-    <div class="col" style="gap:6px"><span class="lbl">${w('Как ты проснулась?', 'Как ты проснулся?')}</span>
+    <div class="col" style="gap:6px" data-tour="wake"><span class="lbl">${w('Как ты проснулась?', 'Как ты проснулся?')}</span>
       <div class="seg" style="grid-template-columns:repeat(3,minmax(0,1fr))">${WAKES.map((x, i) => `<button class="tile ${ui.wake === i ? 'on' : ''}" data-a="set" data-k="wake" data-v="${i}" aria-pressed="${ui.wake === i}">${x}</button>`).join('')}</div></div>
-    ${pats.length ? `<div class="col" style="gap:6px"><span class="lbl">Один узор на сегодня</span>
+    ${pats.length ? `<div class="col" style="gap:6px" data-tour="daypat"><span class="lbl">Один узор на сегодня</span>
       ${pats.slice(0, 8).map((p) => `<button data-a="setS" data-k="pid" data-v="${p.id}" aria-pressed="${ui.pid === p.id}" style="min-height:44px;padding:4px 12px 4px 6px;border-radius:12px;font-size:15px;display:flex;align-items:center;gap:10px;${ui.pid === p.id ? 'background:#F6C98B;border:1px solid #C98E2E' : 'background:#FFF8F2;border:1px solid #E6CCBD'}">
         ${emblemHtml(p.land, 32)}<span class="grow" style="text-align:left">${esc(p.name)}</span><span style="font-size:13px;opacity:.8">${esc(landShort(p.land))}</span></button>`).join('')}</div>` : ''}
     <label class="col" style="color:#A3462F">Слово дня<input class="field" data-m="ui.word" value="${esc(ui.word)}" placeholder="например: мягкость, смелость, тишина"></label>
@@ -664,12 +714,12 @@ SCR.evening = () => {
       <textarea class="field" rows="2" data-m="ui.carriedAns" placeholder="Можно пару слов — или оставить">${esc(ui.carriedAns || '')}</textarea></div>` : ''}
     ${needBackup ? `<button class="box row" data-a="go" data-to="backup" style="text-align:left;color:inherit"><span class="grow" style="font-size:15px">Воскресенье. Сохранишь копию летописи?</span>${I.chev}</button>` : ''}
     <div class="col ${prev && !ui.editing ? 'hide' : ''}" style="gap:14px">
-    <div class="col" style="gap:6px"><span class="lbl">Сколько в тебе сил</span>
+    <div class="col" style="gap:6px" data-tour="energy"><span class="lbl">Сколько в тебе сил</span>
       <div class="row" style="justify-content:space-between">${[2, 5, 8, 11, 13].map((r, i) => `<button data-a="set" data-k="energy" data-v="${i}" aria-label="${energyName(i)}" aria-pressed="${ui.energy === i}" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;background:${ui.energy === i ? '#232C55' : 'transparent'};border:2px solid ${ui.energy === i ? 'var(--pink)' : 'transparent'}"><svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#C9B26A" stroke-width="1.5"/><circle cx="15" cy="15" r="${r}" fill="#E9C77B"/></svg></button>`).join('')}</div>
       <span class="small center" style="color:var(--nmuted)">${energyName(ui.energy)}</span></div>
-    <div class="col" style="gap:6px"><span class="lbl">Небо над тобой</span>
+    <div class="col" style="gap:6px" data-tour="sky"><span class="lbl">Небо над тобой</span>
       <div class="seg" style="grid-template-columns:repeat(5,minmax(0,1fr))">${SKIES.map((s, i) => `<button class="chip ${ui.sky === i ? 'on' : ''}" style="padding:4px 2px;border-radius:14px;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1" data-a="set" data-k="sky" data-v="${i}" aria-pressed="${ui.sky === i}">${s}<span style="font-size:11px;opacity:.8">${SKY_HINT[i]}</span></button>`).join('')}</div></div>
-    <div class="col"><span class="lbl">Шаги дня — к каким землям?</span>
+    <div class="col" data-tour="evlands"><span class="lbl">Шаги дня — к каким землям?</span>
       <div style="display:grid;grid-template-columns:repeat(${Math.min(5, lands.length + 1)},minmax(0,1fr));gap:6px">
       ${lands.map((l) => { const on = ui.lands.includes(l.id); return `<button data-a="eveLand" data-v="${l.id}" aria-pressed="${on}" style="background:none;border:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px">${emblemHtml(l, 54, `box-sizing:border-box;border:3px solid ${on ? 'var(--pink)' : 'transparent'};opacity:${on ? 1 : 0.7}`)}${esc(landShort(l))}</button>`; }).join('')}
       <button data-a="eveLand" data-v="none" aria-pressed="${!ui.lands.length}" style="background:none;border:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px"><span style="display:block;width:54px;height:54px;border-radius:50%;border:3px dashed ${!ui.lands.length ? 'var(--pink)' : '#3A4270'}"></span>Просто день</button>
@@ -814,12 +864,12 @@ SCR.treasury = () => {
       <span class="row" style="gap:8px"><button class="link" style="padding:4px 0;font-size:14px" data-a="hideSums">${hide ? 'Показать суммы' : 'Скрыть суммы'}</button>${helpBtn('treasury')}</span></div>
     <p class="sub" style="margin-top:-6px">Накопления, траты и кошель</p>
     ${hint('treasury')}
-    <div class="box col ${ui.flash === 'wallet' ? 'flash' : ''}" style="gap:6px;padding:12px 14px">
+    <div class="box col ${ui.flash === 'wallet' ? 'flash' : ''}" style="gap:6px;padding:12px 14px" data-tour="wallet">
       ${T.wallet !== null ? `<div class="row" style="justify-content:space-between;align-items:baseline"><span style="font-size:15px;color:#D8C7AC">В кошеле${ui.flash === 'wallet' ? ' · запомнено' : ''}</span><span class="goth" style="font-size:30px;color:#E8C27A">${hide ? '•••' : money(T.wallet)}</span></div>
       ${ui.income ? `<div class="row"><input class="field grow" style="height:44px" inputmode="decimal" data-m="ui.inc" placeholder="${cur()}"><button class="btn amber" style="width:auto;min-height:44px;font-size:14px" data-a="incomeAdd">Положить в кошель</button></div>` : `<button class="link" style="align-self:flex-start;padding:0;font-size:14px" data-a="toggle" data-k="income">+ Пришли монеты</button>`}`
       : `<span style="font-size:15px;line-height:1.35;color:#D8C7AC">Хочешь, чтобы приложение помнило, сколько у тебя в кошеле?</span><button class="btn ghost" style="min-height:44px;font-size:15px" data-a="toggle" data-k="checking">Вписать сумму</button>`}
     </div>
-    <div class="col" style="gap:8px">
+    <div class="col" style="gap:8px" data-tour="spend">
       <span class="lbl">Новая трата</span>
       <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px">
         <input class="field" style="height:44px" inputmode="decimal" aria-label="Сумма" data-m="ui.amt" value="${esc(ui.amt || '')}" placeholder="${cur()}">
@@ -1228,6 +1278,7 @@ A.shareFind = (d) => shareSafe(() => shareFind(+d.i, new Set((S.finds || []).map
 A.shareCard = () => ui.card && shareSafe(() => shareCard(cardImg(ui.card), cardName(ui.card), cardQs(ui.card)[0]));
 A.shareMap = () => { const t = new Date(); shareSafe(() => shareMap(activeLands().filter((l) => l.slot != null && l.slot < 4).map((l) => ({ slot: l.slot, src: emblemSrc(l), pct: Math.round(landProgress(l) * 100), label: landShort(l), letter: (l.customName || '?')[0] })), EMBLEM_SLOTS, `${t.getDate()} ${MONTHS[t.getMonth()]}`)); };
 A.moonInfo = () => toast(`${weekMoonLabel()}. Луна загорается золотом, когда неделя ясная.`);
+A.tour = (d) => runTour(d.k);
 A.findSel = (d) => { const i = +d.i; ui.findSel = ui.findSel === i ? null : i; render(); };
 A.toggle = (d) => { ui[d.k] = !ui[d.k]; if (d.focus) ui.focus = d.focus; render(); };
 
