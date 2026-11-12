@@ -3,6 +3,7 @@
 let ctx = null, master = null, scene = null, sceneName = null, enabled = false;
 // общая мелодия приложения: файл audio/theme.mp3 (если есть), играет по кругу и притихает на экранах с деталями
 const MUSIC_URL = 'audio/theme.mp3';
+const MUSIC_SEC = 63.6; // длина круга мелодии без тишины MP3
 const MUSIC_VOL = { fire: 0.22, morning: 0.32, map: 0.38, cave: 0.24, none: 0.5 };
 let music = null, musicGain = null, musicLoading = false;
 
@@ -143,7 +144,13 @@ async function startMusic() {
     if (!res.ok) return;
     const buf = await ctx.decodeAudioData(await res.arrayBuffer());
     if (!enabled) return;
-    music = ctx.createBufferSource(); music.buffer = buf; music.loop = true; music.connect(musicGain); music.start();
+    // MP3 добавляет в начало немного тишины — пропускаем её, чтобы круг замыкался без паузы
+    const d = buf.getChannelData(0); let off = 0;
+    while (off < Math.min(d.length, 6000) && Math.abs(d[off]) < 0.002) off++;
+    const start = off / buf.sampleRate;
+    music = ctx.createBufferSource(); music.buffer = buf; music.loop = true;
+    music.loopStart = start; music.loopEnd = Math.min(buf.duration, start + MUSIC_SEC);
+    music.connect(musicGain); music.start(0, start);
     duck(sceneName);
   } catch (e) { /* файла нет или не прочитался — играют только детали */ } finally { musicLoading = false; }
 }

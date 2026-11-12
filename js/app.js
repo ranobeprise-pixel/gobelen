@@ -1185,6 +1185,7 @@ SCR.settings = () => {
   ${authorCard()}
   <p class="small center" style="margin:0;color:var(--muted)">Версия от ${fmtDay(BUILD_DATE)} · ${BUILD.slice(0, 4)}</p>
   <p class="small center" style="margin:0;color:var(--muted)">Шрифты: Gatchina — Dimitri Antonov / Blue Curve Designstudio (CC BY 4.0), Brahms Gotisch — Sasha Pavljenko.</p>
+  <p class="small center" style="margin:0;color:var(--muted)">Музыка: «A Small Fire Will Do» — Cal McEachern (OpenGameArt).</p>
 </div></div>`;
 };
 
