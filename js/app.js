@@ -503,7 +503,7 @@ SCR.map = () => {
     const art = src
       ? `<img class="pencil" src="${src}" alt=""><img src="${src}" alt="" ${anim} style="clip-path:inset(${100 - startPct}% 0 0 0)">`
       : `<span class="ownland" style="filter:grayscale(1);opacity:.5">${esc((l.customName || '?')[0])}</span><span class="ownland" ${anim} style="clip-path:inset(${100 - startPct}% 0 0 0)">${esc((l.customName || '?')[0])}</span>`;
-    return `<button class="slot" style="${pos}" data-a="openLand" data-id="${l.id}" aria-label="${esc(landName(l))}, вышито ${pct} процентов">${art}<span class="pill ${done ? 'done' : ''}">${esc(landShort(l))} · ${done ? 'вышито' : pct + '%'}</span></button>`;
+    return `<button class="slot" style="${pos}" data-a="openLand" data-id="${l.id}" aria-label="${esc(landName(l))}, вышито ${pct} процентов">${art}<span class="pill ${done ? 'done' : ''}">${esc(landShort(l).length > 12 ? landShort(l).slice(0, 11).trim() + '…' : landShort(l))} · ${done ? 'вышито' : pct + '%'}</span></button>`;
   }).join('');
   return `
 <div class="scr tabbed darkbg">
@@ -934,7 +934,7 @@ SCR.treasury = () => {
     <div class="col" style="gap:8px;border-top:1px solid #4A3626;padding-top:10px">
     <button data-a="toggle" data-k="chestHelp" aria-expanded="${!!ui.chestHelp}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Сундуки</span><span style="font-size:13px;color:#C9B49A">${ui.chestHelp ? 'скрыть ▴' : 'что это? ▾'}</span></button>
     ${ui.chestHelp ? `<p style="margin:0;font-size:14px;line-height:1.4;color:#D8C7AC">Сундук — это накопление на цель. «Положить» — отложить деньги сюда${T.wallet !== null ? ' (они уйдут из кошеля)' : ''}. «Взять» — достать обратно, например чтобы потратить на эту цель.</p>` : ''}
-    ${T.chests.length ? `<div class="chestgrid">${T.chests.map((c) => {
+    ${T.chests.length ? `<div class="chestgrid">${(() => { const cards = T.chests.map((c) => {
       const goal = Number(c.goal) || 0;
       const pct = goal ? Math.min(100, Math.round((c.saved / goal) * 100)) : (c.saved > 0 ? 50 : 0);
       const val = hide ? (goal ? pct + '%' : '•••') : (goal ? `${money(c.saved)} из ${money(goal)}` : money(c.saved));
@@ -942,8 +942,10 @@ SCR.treasury = () => {
         ${chestSvg(c.saved > 0 ? pct : 0)}
         <span style="font-size:15px;line-height:1.2">${esc(c.name)}</span>
         <span style="font-size:13px;color:#E8C27A;line-height:1.2">${val}</span></button>`;
-    }).join('')}</div>
-    ${T.chests.some((c) => c.id === ui.chest) ? `<div class="col" style="gap:6px"><span style="font-size:14px;color:#D8C7AC">${esc(T.chests.find((c) => c.id === ui.chest).name)}</span><div class="row"><input class="field grow" style="height:44px" inputmode="decimal" data-m="ui.chestAmt" placeholder="${cur()}" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div></div>` : ''}`
+    });
+    const at = T.chests.findIndex((c) => c.id === ui.chest);
+    if (at >= 0) cards.splice(Math.min(cards.length, at - (at % 2) + 2), 0, `<div style="grid-column:1/-1"><div class="col" style="gap:6px"><span style="font-size:14px;color:#D8C7AC">${esc(T.chests.find((c) => c.id === ui.chest).name)}</span><div class="row"><input class="field grow" style="height:44px" inputmode="decimal" data-m="ui.chestAmt" placeholder="${cur()}" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div></div></div>`);
+    return cards.join(''); })()}</div>`
     : '<p class="sub">Сундуков пока нет. Их можно завести в Котомке.</p>'}
     </div>
     <button data-a="toggle" data-k="treMore" aria-expanded="${!!ui.treMore}" class="row" style="justify-content:space-between;background:none;border:none;border-top:1px solid #4A3626;padding:10px 0 0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Ещё: постоянные траты, сверка кошеля</span><span style="font-size:13px;color:#C9B49A">${ui.treMore ? '▴' : '▾'}</span></button>

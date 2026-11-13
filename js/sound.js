@@ -117,7 +117,7 @@ const SCENES = {
     });
   },
   morning(sc, bus) {
-    sc.src.push(loopNoise('white', bus, 0.025, ['bandpass', 600, 0.5]));
+    sc.src.push(loopNoise('white', bus, 0.008, ['bandpass', 600, 0.5]));
     every(sc, 2500, 6500, () => {
       const n = 2 + Math.floor(Math.random() * 3), base = 2400 + Math.random() * 1400;
       for (let i = 0; i < n; i++) tone(bus, base, base * (1.25 + Math.random() * 0.3), 0.09, 0.05, 'sine', i * 0.13);
