@@ -1867,6 +1867,31 @@ function boot() {
     go('map');
   } else go('start');
   if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
+  inAppHint();
+}
+// открыли по ссылке внутри Инстаграма, VK, Telegram и т. п.: там нельзя добавить на экран «Домой» — подсказываем открыть в браузере
+function inAppHint() {
+  const ua = navigator.userAgent || '';
+  const standalone = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  const ios = /iPhone|iPad|iPod/.test(ua);
+  const inApp = /Instagram|FBAN|FBAV|VKClient|vkontakte|Telegram|LinkedInApp|Line\//i.test(ua) || (ios && !/Safari\//.test(ua));
+  if (standalone || !inApp) return;
+  try { if (sessionStorage.getItem('gobelen.inapp')) return; } catch (e) { /* нет — показываем */ }
+  const url = location.origin + location.pathname;
+  const ov = document.createElement('div'); ov.className = 'shareov inappov'; ov.setAttribute('role', 'dialog');
+  ov.innerHTML = `<h2>Открой гобелен в браузере</h2>
+    <p>Из этого приложения гобелен не встанет на экран «Домой», а записи могут потеряться.</p>
+    <ol>${ios ? '<li>Нажми <b>⋯</b> или <b>⋮</b> в углу экрана</li><li>Выбери <b>«Открыть в браузере»</b> (Safari)</li><li>В Safari нажми <b>«Поделиться»</b> → <b>«На экран „Домой“»</b></li>' : '<li>Нажми <b>⋮</b> в углу экрана</li><li>Выбери <b>«Открыть в браузере»</b> (Chrome)</li><li>В Chrome: <b>⋮</b> → <b>«Добавить на главный экран»</b></li>'}</ol>
+    <p class="muted">Не нашла кнопку? Скопируй ссылку и вставь её в ${ios ? 'Safari' : 'Chrome'}.</p>
+    <div class="row" style="gap:10px;justify-content:center;width:100%;max-width:360px">
+      <button class="btn ghost" type="button" data-x="stay" style="flex:1">Остаться здесь</button>
+      <button class="btn gold" type="button" data-x="copy" style="flex:1">Скопировать ссылку</button>
+    </div>`;
+  ov.querySelector('[data-x="stay"]').onclick = () => { try { sessionStorage.setItem('gobelen.inapp', '1'); } catch (e) { /* ок */ } ov.remove(); };
+  ov.querySelector('[data-x="copy"]').onclick = async (e) => {
+    try { await navigator.clipboard.writeText(url); e.target.textContent = 'Скопировано'; } catch (err) { const m = ov.querySelector('.muted'); m.innerHTML = `Ссылка: <span style="user-select:all;-webkit-user-select:all;color:#E9C77B">${url}</span>`; }
+  };
+  document.body.appendChild(ov);
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && S.onboarded && S.lastActive !== today()) {

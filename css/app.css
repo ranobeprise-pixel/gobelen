@@ -239,3 +239,5 @@ canvas.amb.soft{image-rendering:auto;mix-blend-mode:screen}
 body:has(.fab) .toast{bottom:calc(var(--tab) + 84px)}
 /* узкие экраны: подписи нижней панели не наезжают друг на друга */
 @media (max-width:375px){.tabbar button{font-size:11px}.tabbar button small{font-size:9px}}
+
+.inappov{z-index:95;padding-left:28px;padding-right:28px}.inappov h2{margin:0;font-family:'Brahms Gotisch',Georgia,serif;color:#E9C77B;font-weight:400;font-size:28px}.inappov ol{text-align:left;margin:0;padding-left:22px;font-size:16px;line-height:1.5;max-width:340px}.inappov li{margin:4px 0}.inappov .muted{color:#CDBFA8;font-size:14px}
