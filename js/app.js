@@ -178,7 +178,7 @@ function HINTS() {
     map: ['Как устроен гобелен', [
       'Каждая эмблема на карте — <b>земля</b>, сфера жизни, которую ты ' + w('выбрала', 'выбрал') + '. Пока земля в карандаше, она серая; с каждым шагом эмблема проступает цветом снизу вверх.',
       'Нажми на землю — откроются её <b>узоры</b>, конкретные дела. Там же можно отметить шаг.',
-      'Внизу пять вкладок: <b>Привал</b> — утренние сборы и вечерний костёр, <b>Сокровищница</b> — деньги, <b>Карта</b> — этот гобелен, <b>Заклинания</b> — маленькие привычки, <b>Летопись</b> — всё, что ты ' + w('оставила', 'оставил') + ' на пути.',
+      'Внизу пять вкладок: <b>Привал</b> — утренние сборы и вечерний костёр, <b>Сокровищница</b> — сундуки-накопления, <b>Карта</b> — этот гобелен, <b>Заклинания</b> — маленькие привычки, <b>Летопись</b> — всё, что ты ' + w('оставила', 'оставил') + ' на пути.',
       '<b>Котомка</b> справа вверху — настройки, копии и путеводитель. Знак «?» в углу экрана снова покажет эту подсказку.']],
     evening: ['Как устроен привал', [
       'Полминуты вечером: сколько сил (луны), какое небо над тобой — так здесь отмечается настроение, — и к какой земле был шаг.',
@@ -192,11 +192,9 @@ function HINTS() {
       'Когда стежков наберётся на всю эмблему, земля вышита. Тогда можно надстроить новый ярус или повесить её на стену Летописи.',
       '«Изменить узоры» — добавить, убрать, поменять нагрузку и частоту.']],
     treasury: ['Как устроена сокровищница', [
-      `<b>Сундуки</b> — накопления на цели: подушка, поездка, учёба. Это не ежемесячные конверты: деньги лежат в сундуке, пока ты ${w('сама', 'сам')} не решишь их взять. Нажми на сундук, чтобы положить или взять.`,
-      'Каждая трата получает один из трёх видов: <b>Провизия</b> — необходимое и регулярное: аренда, продукты, проезд, связь. <b>Снаряжение</b> — то, что ты ценишь и во что вкладываешься. <b>Рассыпано</b> — на автопилоте или «не помню на что».',
-      '<b>Конверты</b> — сколько ты разрешаешь себе потратить на что-то за месяц: кафе, такси. Выбираешь конверт при записи траты и видишь, сколько осталось. Каждый месяц конверты наполняются заново.',
-      '<b>Постоянные траты</b> (аренда, подписки) можно завести один раз — они сами запишутся как провизия в свой день месяца.',
-      '<b>Кошель</b> — сколько денег у тебя на руках. Сверь его: приложение запомнит сумму и дальше будет вычитать траты. Если при следующей сверке денег меньше, разница уйдёт в «рассыпано» — без упрёков.']],
+      `<b>Сундуки</b> — накопления на цели: подушка, поездка, учёба. Деньги лежат в сундуке, пока ты ${w('сама', 'сам')} не решишь их взять. Нажми на сундук, чтобы положить или взять.`,
+      'Чем ближе к цели, тем больше в сундуке золота: пустой, монеты, самоцветы, полный. Цель можно не ставить — тогда сундук просто копит.',
+      '«Скрыть суммы» прячет цифры, если показываешь экран кому-то. Новый сундук и валюта — кнопкой внизу или в Котомке.']],
     spells: ['Как устроены заклинания', [
       'Заклинания — маленькие регулярные привычки: движение, чтение, вода, тишина.',
       'У каждого есть <b>малая</b> версия на трудный день и <b>великая</b> на хороший. Обе считаются возвращением к привычке.',
@@ -213,7 +211,7 @@ const SHORT = () => ({
   evening: ['Отметь силы, настроение (небо) и к какой земле был шаг. Каждый узор вплетает в землю стежки.'],
   morning: ['Как ' + w('проснулась', 'проснулся') + ', одно дело на день и слово-ориентир. Можно пропускать.'],
   land: ['<b>Узоры</b> — дела этой земли. Отмечай сделанное — в землю вплетутся стежки. Цель помогает видеть не только усилия, но и результат.'],
-  treasury: ['<b>Сундуки</b> — накопления на цели. <b>Конверты</b> — сколько можно потратить на что-то за месяц. Траты бывают трёх видов: необходимое, ценное и «на автопилоте».', 'Подробнее — в Путеводителе в Котомке.'],
+  treasury: ['<b>Сундуки</b> — накопления на мечты. Нажми на сундук, чтобы положить или взять монеты.'],
   spells: ['Маленькие привычки. Малое — на трудный день, великое — на хороший, засчитываются оба. Считаются не дни подряд, а возвращения.'],
   journal: ['Сюда само собой складывается всё, что было на пути. Раз в неделю можно вытянуть карту с вопросами.']
 });
@@ -250,10 +248,8 @@ const TOURS = () => ({
     { sel: '[data-a="weaveEdit"]', text: 'Дела земли можно поменять в любой момент.' },
   ],
   treasury: [
-    { sel: '[data-tour="wallet"]', text: 'Здесь видно, сколько у тебя в кошеле. Пришли деньги — нажми «Пришли монеты».' },
-    { sel: '[data-tour="spend"]', text: 'Потратила — запиши сумму и выбери вид траты. Можно без подробностей.'.replace('Потратила', w('Потратила', 'Потратил')) },
-    { sel: '.chestgrid', text: 'Сундуки — накопления на мечты. Чем больше отложено, тем больше в сундуке золота.' },
-    { sel: '[data-k="treMore"]', text: 'Постоянные траты и сверка кошеля спрятаны здесь, чтобы не мешать каждый день.' },
+    { sel: '.chestgrid', text: 'Сундуки — накопления на мечты. Нажми на сундук, чтобы положить или взять монеты. Чем ближе к цели, тем больше в нём золота.' },
+    { sel: '[data-tour="chestedit"]', text: 'Здесь можно завести новый сундук, поставить цель или поменять валюту.' },
   ],
   spells: [
     { sel: '[data-a="castOpen"]', text: 'Заклинания — маленькие привычки. Нажми, когда сделала, и это засчитается.'.replace('сделала', w('сделала', 'сделал')) },
@@ -278,7 +274,7 @@ function campRoute() {
 }
 
 function tabbar(active, night = false) {
-  const tabs = [['camp', 'Привал', I.fire, 'отметки дня'], ['treasury', 'Сокровищница', I.chest, 'деньги'], ['map', 'Карта', I.map, 'цели'], ['spells', 'Заклинания', I.book, 'привычки'], ['journal', 'Летопись', I.scroll, 'дневник']];
+  const tabs = [['camp', 'Привал', I.fire, 'отметки дня'], ['treasury', 'Сокровищница', I.chest, 'накопления'], ['map', 'Карта', I.map, 'цели'], ['spells', 'Заклинания', I.book, 'привычки'], ['journal', 'Летопись', I.scroll, 'дневник']];
   return `<nav class="tabbar ${night ? 'nightbar' : ''}" aria-label="Разделы">${tabs.map(([id, label, ic, sub]) =>
     `<button data-a="tab" data-to="${id}" class="${active === id ? 'on' : ''}" ${active === id ? 'aria-current="page"' : ''}>${ic}<span>${label}</span><small>${sub}</small></button>`).join('')}</nav>`;
 }
@@ -465,9 +461,9 @@ SCR.tsetup = () => {
     </div>`).join('')}
     <div class="row"><input class="field grow" style="height:44px" data-m="ui.newChest" value="${esc(ui.newChest || '')}" placeholder="Свой сундук, например: новый ноутбук"><button class="btn amber" style="width:auto;min-height:44px" data-a="chestAdd">Добавить</button></div>
   </div>
-  ${edit && ui.cur !== (S.treasury.currency || '₽') && (S.treasury.spends.length || S.treasury.chests.some((c) => c.saved) || S.treasury.wallet !== null) ? `<p class="note warn" style="margin:0">Суммы не пересчитаются: поменяется только значок. Например, ${Math.round(S.treasury.chests[0]?.saved || 1000).toLocaleString('ru-RU')} ${S.treasury.currency || '₽'} станет ${Math.round(S.treasury.chests[0]?.saved || 1000).toLocaleString('ru-RU')} ${ui.cur}.</p>` : ''}
+  ${edit && ui.cur !== (S.treasury.currency || '₽') && S.treasury.chests.some((c) => c.saved) ? `<p class="note warn" style="margin:0">Суммы не пересчитаются: поменяется только значок. Например, ${Math.round(S.treasury.chests[0]?.saved || 1000).toLocaleString('ru-RU')} ${S.treasury.currency || '₽'} станет ${Math.round(S.treasury.chests[0]?.saved || 1000).toLocaleString('ru-RU')} ${ui.cur}.</p>` : ''}
   <div class="row" style="justify-content:space-between"><span class="lbl">Валюта</span><div class="row" style="gap:6px">${['₽', '$', '€'].map((c) => `<button class="tile ${ui.cur === c ? 'on' : ''}" style="width:52px;min-height:44px;font-size:18px" data-a="setCur" data-v="${c}" aria-pressed="${ui.cur === c}">${c}</button>`).join('')}</div></div>
-  <div class="col" style="gap:6px"><span class="lbl">Как будешь вести траты?</span>
+  <div style="display:none">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
     ${modes.map((m, i) => `<button data-a="tmode" data-v="${i}" aria-pressed="${ui.mode === i}" style="min-height:84px;padding:10px;border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:4px;${ui.mode === i ? 'background:#E8B04A;color:#2A1D12;border:1px solid #E8B04A' : 'background:transparent;color:#F3E7CF;border:1px solid #5C4632'}"><span style="font-size:15px;font-weight:700">${i === 0 ? w('Вношу сама', 'Вношу сам') : m[0]}</span><span style="font-size:13px;opacity:.85">${m[1]}</span></button>`).join('')}
     </div></div>
@@ -867,20 +863,12 @@ function chestSvg(pct) {
 }
 SCR.treasury = () => {
   const T = S.treasury;
-  const td = today();
-  if (ui.tag === undefined) ui.tag = 1;
-  const wk = T.spends.filter((s) => daysBetween(s.date, td) < 7);
-  const sum = (arr) => arr.reduce((a, s) => a + s.amount, 0);
-  const wkSum = sum(wk);
-  const shares = [0, 1, 2].map((t) => (wkSum ? Math.round((sum(wk.filter((s) => s.tag === t)) / wkSum) * 100) : 0));
   const hide = T.hideSums;
-  const recent = T.spends.slice(-6).reverse();
+  const total = T.chests.reduce((a, c) => a + (c.saved || 0), 0);
   const setup = T.setupPending ? `<div class="box col" style="gap:10px;padding:14px;border-color:#E8B04A" data-tour="tsetup">
       <span class="goth" style="font-size:22px;color:#E8C27A">Первый заход в сокровищницу</span>
-      <span style="font-size:15px;line-height:1.4;color:#D8C7AC">Сундуки на мечты уже собраны под твои земли — их видно внизу. Осталось два вопроса.</span>
-      <div class="row" style="justify-content:space-between"><span style="font-size:15px">В какой валюте считаем?</span><div class="row" style="gap:6px">${['₽', '$', '€'].map((c) => `<button class="tile ${(ui.cur || T.currency || '₽') === c ? 'on' : ''}" style="width:52px;min-height:44px;font-size:18px" data-a="setCur" data-v="${c}" aria-pressed="${(ui.cur || T.currency || '₽') === c}">${c}</button>`).join('')}</div></div>
-      <span style="font-size:15px">Как удобнее вести траты?</span>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${[[w('Вношу сама', 'Вношу сам'), 'каждую трату, в пару касаний'], ['Сверяю кошель', 'раз в неделю, без мелочей']].map((m, i) => `<button data-a="tmode" data-v="${i}" aria-pressed="${(ui.mode ?? T.mode ?? 0) === i}" style="min-height:76px;padding:10px;border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:4px;${(ui.mode ?? T.mode ?? 0) === i ? 'background:#E8B04A;color:#2A1D12;border:none' : 'background:transparent;color:inherit;border:1px solid #5C4632'}"><b style="font-size:15px">${m[0]}</b><span style="font-size:13px;opacity:.85">${m[1]}</span></button>`).join('')}</div>
+      <span style="font-size:15px;line-height:1.4;color:#D8C7AC">Сундуки на мечты уже собраны под твои земли — их видно внизу. Остался один вопрос.</span>
+      <div class="row" style="justify-content:space-between"><span style="font-size:15px">В какой валюте копим?</span><div class="row" style="gap:6px">${['₽', '$', '€'].map((c) => `<button class="tile ${(ui.cur || T.currency || '₽') === c ? 'on' : ''}" style="width:52px;min-height:44px;font-size:18px" data-a="setCur" data-v="${c}" aria-pressed="${(ui.cur || T.currency || '₽') === c}">${c}</button>`).join('')}</div></div>
       <button class="btn amber" style="min-height:46px" data-a="tsetupDone">Готово</button>
     </div>` : '';
   return `
@@ -889,51 +877,12 @@ SCR.treasury = () => {
   <div class="sheetup" style="background:var(--tre);padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px">
     <div class="row" style="justify-content:space-between"><h1 style="line-height:1">Сокровищница</h1>
       <span class="row" style="gap:8px"><button class="link" style="padding:4px 0;font-size:14px" data-a="hideSums">${hide ? 'Показать суммы' : 'Скрыть суммы'}</button>${helpBtn('treasury')}</span></div>
-    <p class="sub" style="margin-top:-6px">Накопления, траты и кошель</p>
+    <p class="sub" style="margin-top:-6px">Сундуки — накопления на мечты${total && !hide ? ` · всего ${money(total)}` : ''}</p>
     ${setup}
     ${hint('treasury')}
-    <div class="box col ${ui.flash === 'wallet' ? 'flash' : ''}" style="gap:6px;padding:12px 14px" data-tour="wallet">
-      ${T.wallet !== null ? `<div class="row" style="justify-content:space-between;align-items:baseline"><span style="font-size:15px;color:#D8C7AC">В кошеле${ui.flash === 'wallet' ? ' · запомнено' : ''}</span><span class="goth" style="font-size:30px;color:#E8C27A">${hide ? '•••' : money(T.wallet)}</span></div>
-      ${ui.income ? `<div class="row"><input class="field grow" style="height:44px" inputmode="decimal" data-m="ui.inc" placeholder="${cur()}"><button class="btn amber" style="width:auto;min-height:44px;font-size:14px" data-a="incomeAdd">Положить в кошель</button></div>` : `<button class="link" style="align-self:flex-start;padding:0;font-size:14px" data-a="toggle" data-k="income">+ Пришли монеты</button>`}`
-      : `<span style="font-size:15px;line-height:1.35;color:#D8C7AC">Хочешь, чтобы приложение помнило, сколько у тебя в кошеле?</span><button class="btn ghost" style="min-height:44px;font-size:15px" data-a="toggle" data-k="checking">Вписать сумму</button>`}
-    </div>
-    <div class="col" style="gap:8px" data-tour="spend">
-      <span class="lbl">Новая трата</span>
-      <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px">
-        <input class="field" style="height:44px" inputmode="decimal" aria-label="Сумма" data-m="ui.amt" value="${esc(ui.amt || '')}" placeholder="${cur()}">
-        <input class="field" style="height:44px" aria-label="На что" data-m="ui.what" value="${esc(ui.what || '')}" placeholder="на что (необязательно)"></div>
-      <div class="seg" style="grid-template-columns:repeat(3,minmax(0,1fr))">${TAGS.map((t, i) => `<button class="tile ${ui.tag === i ? 'on' : ''}" style="min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px" data-a="set" data-k="tag" data-v="${i}" aria-pressed="${ui.tag === i}"><span style="font-size:15px;font-weight:700">${t[0]}</span><span style="font-size:12px;opacity:.85">${t[1]}</span></button>`).join('')}</div>
-      ${(T.envelopes || []).length ? `<div class="row" style="flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:13px;color:#C9B49A">из конверта:</span>${T.envelopes.map((e) => `<button class="chip ${ui.env === e.id ? 'on' : ''}" style="min-height:44px;font-size:13px;border-color:#5C4632;${ui.env === e.id ? 'background:#E8B04A;color:#2A1D12;border-color:#E8B04A' : ''}" data-a="pickEnv" data-v="${e.id}">${esc(e.name)}</button>`).join('')}</div>` : ''}
-      <button class="btn amber" style="min-height:46px" data-a="spendAdd">Записать трату</button>
-    </div>
-    ${(() => {
-      const ym = today().slice(0, 7);
-      const envs = T.envelopes || [];
-      return `<button data-a="toggle" data-k="envHelp" aria-expanded="${!!ui.envHelp}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#E8C27A;text-align:left;min-height:44px;border-top:1px solid #4A3626;padding-top:10px"><span style="font-size:16px">Конверты на месяц</span><span style="font-size:13px;color:#C9B49A">${ui.envHelp ? 'скрыть ▴' : 'что это? ▾'}</span></button>
-      ${ui.envHelp ? `<p style="margin:0;font-size:14px;line-height:1.4;color:#D8C7AC">Конверт — сколько ты разрешаешь себе потратить на что-то за месяц: кафе, такси, одежду. Записывая трату, выбери конверт — и увидишь, сколько в нём осталось. Первого числа каждый конверт наполняется заново.</p>` : ''}
-      ${envs.map((e) => {
-        const spent = T.spends.filter((x) => x.envId === e.id && x.date.slice(0, 7) === ym).reduce((a, x) => a + x.amount, 0);
-        const left = e.limit - spent;
-        const pct = e.limit ? Math.min(100, Math.round((spent / e.limit) * 100)) : 0;
-        const over = left < 0;
-        return `<div class="col" style="gap:3px">
-          <div class="row" style="justify-content:space-between;font-size:15px"><span>${esc(e.name)}</span><span class="row" style="gap:2px"><span style="color:${over ? '#F0A07A' : '#E8C27A'}">${hide ? pct + '%' : over ? `сверх на ${money(-left)}` : `осталось ${money(left)}`}</span>${ui.envEdit ? `<button data-a="envDel" data-id="${e.id}" aria-label="Убрать конверт" style="width:30px;height:30px;border:none;background:none;color:#C9B49A">${I.x}</button>` : ''}</span></div>
-          <span class="prog" style="display:block"><span style="display:block;height:100%;width:${pct}%;background:${over ? '#C0603A' : 'repeating-linear-gradient(90deg,#A88C6A 0 6px,#8A7050 6px 8px)'}"></span></span>
-          <span style="font-size:12px;color:#C9B49A">${hide ? '' : `потрачено ${money(spent)} из ${money(e.limit)}`}</span></div>`;
-      }).join('')}
-      ${ui.envAdd ? `<div class="row"><input class="field grow" style="height:42px" data-m="ui.envName" value="${esc(ui.envName || '')}" placeholder="на что: кафе"><input class="field" style="height:42px;width:110px" inputmode="decimal" data-m="ui.envLimit" value="${esc(ui.envLimit || '')}" placeholder="в месяц"></div>
-        <div class="row"><button class="btn amber" style="min-height:42px;font-size:15px" data-a="envAdd">Завести конверт</button><button class="btn ghost" style="min-height:42px;font-size:15px;width:auto" data-a="toggle" data-k="envAdd">Отмена</button></div>`
-      : `<div class="row" style="gap:14px"><button class="link" style="padding:2px 0;font-size:14px" data-a="toggle" data-k="envAdd">+ Новый конверт</button>${envs.length ? `<button class="link" style="padding:2px 0;font-size:14px" data-a="toggle" data-k="envEdit">${ui.envEdit ? 'готово' : 'изменить'}</button>` : ''}</div>`}`;
-    })()}
-    ${wkSum ? `<div class="col" style="gap:5px"><span style="font-size:14px;color:#E8C27A">Куда ушло золото за неделю${hide ? '' : ` · ${money(wkSum)}`}</span>
-      <div role="img" aria-label="Снаряжение ${shares[0]} процентов, провизия ${shares[1]}, рассыпано ${shares[2]}" style="display:flex;height:12px;border-radius:3px;overflow:hidden;gap:2px">
-        ${shares[0] ? `<div style="flex:${shares[0]} 1 0;background:#E8B04A"></div>` : ''}${shares[1] ? `<div style="flex:${shares[1]} 1 0;background:#A88C6A"></div>` : ''}${shares[2] ? `<div style="flex:${shares[2]} 1 0;background:#6B5A4C"></div>` : ''}</div>
-      <div class="row" style="justify-content:space-between;font-size:13px;color:#D8C7AC"><span>Снаряжение ${shares[0]}%</span><span>Провизия ${shares[1]}%</span><span>Рассыпано ${shares[2]}%</span></div></div>` : ''}
-    ${recent.length ? `<div class="col" style="gap:4px"><span style="font-size:14px;color:#E8C27A">Последние траты</span>
-      ${recent.map((s) => `<div class="row" style="font-size:14px;justify-content:space-between"><span class="grow">${fmtShort(s.date)} · ${esc(s.note || TAGS[s.tag][0])}</span><span>${hide ? '•••' : money(s.amount)}</span><button data-a="spendDel" data-id="${s.id}" aria-label="Удалить трату" style="width:44px;height:44px;border:none;background:none;color:#C9B49A">${I.x}</button></div>`).join('')}</div>` : ''}
-    <div class="col" style="gap:8px;border-top:1px solid #4A3626;padding-top:10px">
-    <button data-a="toggle" data-k="chestHelp" aria-expanded="${!!ui.chestHelp}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Сундуки</span><span style="font-size:13px;color:#C9B49A">${ui.chestHelp ? 'скрыть ▴' : 'что это? ▾'}</span></button>
-    ${ui.chestHelp ? `<p style="margin:0;font-size:14px;line-height:1.4;color:#D8C7AC">Сундук — это накопление на цель. «Положить» — отложить деньги сюда${T.wallet !== null ? ' (они уйдут из кошеля)' : ''}. «Взять» — достать обратно, например чтобы потратить на эту цель.</p>` : ''}
+    <div class="col" style="gap:8px">
+    <button data-a="toggle" data-k="chestHelp" aria-expanded="${!!ui.chestHelp}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Как это работает</span><span style="font-size:13px;color:#C9B49A">${ui.chestHelp ? 'скрыть ▴' : 'что это? ▾'}</span></button>
+    ${ui.chestHelp ? `<p style="margin:0;font-size:14px;line-height:1.4;color:#D8C7AC">Сундук — это накопление на цель. Нажми на сундук: «Положить» — отложить деньги сюда, «Взять» — достать обратно, например чтобы потратить на эту цель. Чем ближе к цели, тем больше в сундуке золота.</p>` : ''}
     ${T.chests.length ? `<div class="chestgrid">${(() => { const cards = T.chests.map((c) => {
       const goal = Number(c.goal) || 0;
       const pct = goal ? Math.min(100, Math.round((c.saved / goal) * 100)) : (c.saved > 0 ? 50 : 0);
@@ -946,25 +895,9 @@ SCR.treasury = () => {
     const at = T.chests.findIndex((c) => c.id === ui.chest);
     if (at >= 0) cards.splice(Math.min(cards.length, at - (at % 2) + 2), 0, `<div style="grid-column:1/-1"><div class="col" style="gap:6px"><span style="font-size:14px;color:#D8C7AC">${esc(T.chests.find((c) => c.id === ui.chest).name)}</span><div class="row"><input class="field grow" style="height:44px" inputmode="decimal" data-m="ui.chestAmt" placeholder="${cur()}" value="${esc(ui.chestAmt || '')}"><button class="btn amber" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="1">Положить</button><button class="btn ghost" style="width:auto;min-height:44px;font-size:15px" data-a="chestMove" data-v="-1">Взять</button></div></div></div>`);
     return cards.join(''); })()}</div>`
-    : '<p class="sub">Сундуков пока нет. Их можно завести в Котомке.</p>'}
+    : '<p class="sub">Сундуков пока нет. Заведи первый — кнопка ниже.</p>'}
     </div>
-    <button data-a="toggle" data-k="treMore" aria-expanded="${!!ui.treMore}" class="row" style="justify-content:space-between;background:none;border:none;border-top:1px solid #4A3626;padding:10px 0 0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Ещё: постоянные траты, сверка кошеля</span><span style="font-size:13px;color:#C9B49A">${ui.treMore ? '▴' : '▾'}</span></button>
-    ${ui.treMore || ui.checking ? `    <div class="box col" style="gap:8px;padding:10px 12px">
-      ${ui.checking ? `<label class="row" style="font-size:14px;color:#D8C7AC">${T.wallet === null ? 'Сколько сейчас в кошеле?' : 'Сколько в кошеле на самом деле?'}<input class="field grow" style="height:44px" inputmode="decimal" data-m="ui.real" placeholder="${cur()}"></label>
-        <span style="font-size:14px;line-height:1.3">${T.wallet === null ? 'Сумма запомнится, и дальше траты будут вычитаться из неё.' : 'Разница уйдёт в «Рассыпано по дороге» с пометкой «не помню на что». Без упрёков.'}</span>
-        <div class="row"><button class="btn amber" style="min-height:42px;font-size:15px" data-a="walletCheck">Сверить</button><button class="btn ghost" style="min-height:42px;font-size:15px" data-a="toggle" data-k="checking">Отмена</button></div>`
-      : `<div class="row" style="justify-content:space-between"><span style="font-size:14px;line-height:1.3;color:#D8C7AC">${T.wallet === null ? 'Хочешь, чтобы приложение помнило, сколько в кошеле?' : 'Монет меньше, чем помнишь? Не помнишь, на что ушли?'}</span><button class="btn ghost" style="width:auto;min-height:44px;font-size:14px" data-a="toggle" data-k="checking">Сверить кошель</button></div>
-`}
-    </div>
-    <div class="box col" style="gap:8px;padding:10px 12px">
-      <button data-a="toggle" data-k="regOpen" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:inherit;text-align:left;min-height:44px"><span class="col" style="gap:0"><span style="font-size:15px;font-weight:700">Постоянные траты${T.regular.length ? ` · ${T.regular.length}` : ''}</span><span style="font-size:13px;color:#C9B49A">аренда, связь, подписки — запишутся сами как провизия</span></span><span style="font-size:20px">${ui.regOpen ? '−' : '+'}</span></button>
-      ${ui.regOpen ? `${T.regular.map((r) => `<div class="row" style="font-size:14px;justify-content:space-between"><span class="grow">${esc(r.name)} · ${r.day} числа</span><span>${hide ? '•••' : money(r.amount)}</span><button data-a="regDel" data-id="${r.id}" aria-label="Убрать постоянную трату" style="width:44px;height:44px;border:none;background:none;color:#C9B49A">${I.x}</button></div>`).join('')}
-        <input class="field" style="height:42px" data-m="ui.regName" value="${esc(ui.regName || '')}" placeholder="Что это, например: аренда">
-        <div class="row"><input class="field grow" style="height:42px" inputmode="decimal" data-m="ui.regAmt" value="${esc(ui.regAmt || '')}" placeholder="сумма, ${cur()}"><input class="field" style="height:42px;width:110px" inputmode="numeric" data-m="ui.regDay" value="${esc(ui.regDay || '')}" placeholder="число"></div>
-        <button class="btn amber" style="min-height:42px;font-size:15px" data-a="regAdd">Добавить постоянную трату</button>
-        <span style="font-size:13px;color:#C9B49A">Первая запись появится в ближайшее указанное число. То, что уже оплачено в этом месяце, не задвоится.</span>` : ''}
-    </div>
-    <button class="link" style="align-self:flex-start;padding:0;font-size:14px" data-a="go" data-to="tsetupEdit">Настроить сундуки и валюту</button>` : ''}
+    <button class="btn ghost" style="min-height:44px;font-size:15px" data-a="go" data-to="tsetupEdit" data-tour="chestedit">Добавить или настроить сундуки</button>
   </div>
   ${tabbar('treasury')}
 </div>`;
@@ -1175,7 +1108,7 @@ SCR.settings = () => {
     ['Герой и имя', `${S.hero === 'm' ? 'Странник' : 'Странница'}${S.name ? ' · ' + esc(S.name) : ''}`, 'heroEdit'],
     ['Мои земли', 'Сменить, усыпить, добавить свою', 'landsEdit'],
     ['Узоры земель', 'Выбрать землю и поменять её узоры', 'weavePick'],
-    ['Сокровищница', 'Сундуки и режим учёта', 'tsetupEdit'],
+    ['Сокровищница', 'Сундуки и валюта', 'tsetupEdit'],
     ['Нити наблюдений', `${S.threads.list.filter((t) => t.status === 'woven').length} вплетено · ${S.threads.list.filter((t) => t.status !== 'woven').length} отложено`, 'threads'],
     ['Резервные копии', S.settings.lastBackup ? `Последняя копия: ${fmtDay(S.settings.lastBackup)}` : 'Копий ещё не было', 'backup']
   ];
@@ -1295,7 +1228,7 @@ SCR.backup = () => `
     <p style="margin:0">Открой гобелен на новом устройстве → Котомка → Резервные копии → «Восстановить из копии» → выбери последний файл gobelen-….json. Всё вернётся: земли, привалы, траты, карты и ответы. Если гобелен открывается впервые, то же самое есть на стартовом экране: «У меня уже есть гобелен».</p>
     <p style="margin:0">Восстановление заменяет то, что сейчас на устройстве, поэтому выбирай самый свежий файл.</p>
   </section>
-  <p class="sub" style="font-size:14px">В копии всё: земли, узоры, привалы, траты, ответы Странствующей, карты и нити. Никуда, кроме выбранного тобой места, она не отправляется.</p>
+  <p class="sub" style="font-size:14px">В копии всё: земли, узоры, привалы, сундуки, ответы Странствующей, карты и нити. Никуда, кроме выбранного тобой места, она не отправляется.</p>
   <button class="link" data-a="resetAsk" style="color:#9A4A2A">${ui.reset ? 'Точно начать с чистой канвы? Всё сотрётся' : 'Начать путь заново'}</button>
   ${ui.reset ? `<div class="row"><button class="btn" data-a="resetDo">Да, стереть всё</button><button class="btn ghost" data-a="toggle" data-k="reset">Нет</button></div>` : ''}
 </div></div>`;
@@ -1420,8 +1353,8 @@ A.chestAdd = () => { const n = (ui.newChest || '').trim(); if (!n) return; ui.ch
 A.tmode = (d) => { ui.mode = Number(d.v); render(); };
 const cleanChests = () => ui.chests.filter((c) => c.on).map(({ id, name, why, goal, saved }) => ({ id, name, why, goal: Number(String(goal).replace(/\s/g, '')) || 0, saved: saved || 0 }));
 A.setCur = (d) => { ui.cur = d.v; render(); };
-A.tsetupDone = () => { const T = S.treasury; T.currency = ui.cur || T.currency || '₽'; T.mode = ui.mode ?? T.mode ?? 0; T.setupPending = false; save(); ui.cur = undefined; ui.mode = undefined; toast('Сокровищница готова'); render(); };
-A.tsetupSave = () => { S.treasury.chests = cleanChests(); S.treasury.mode = ui.mode; S.treasury.currency = ui.cur; save(); toast('Сундуки на месте'); go('treasury'); };
+A.tsetupDone = () => { const T = S.treasury; T.currency = ui.cur || T.currency || '₽'; T.setupPending = false; save(); ui.cur = undefined; ui.mode = undefined; toast('Сокровищница готова'); render(); };
+A.tsetupSave = () => { S.treasury.chests = cleanChests(); S.treasury.currency = ui.cur; save(); toast('Сундуки на месте'); go('treasury'); };
 A.obFinish = () => {
   const td = today();
   S.hero = ob.hero; S.name = (ob.name || '').trim();
@@ -1430,7 +1363,7 @@ A.obFinish = () => {
     const own = ob.customs.find((c) => c.id === id);
     return { id, customName: own ? own.name : null, art: own ? own.art : null, slot: i, tier: 1, stitches: 0, target: tierTarget(patterns), patterns, since: td, status: 'active' };
   });
-  // деньги в онбординге не спрашиваем: сундуки собираем по землям, валюту и способ учёта спросим в Сокровищнице
+  // деньги в онбординге не спрашиваем: сундуки собираем по землям, валюту спросим в Сокровищнице
   S.treasury.chests = chestSuggestions(ob.picked).map(([name, why]) => ({ id: uid(), name, why, goal: 0, saved: 0 }));
   S.treasury.mode = 0; S.treasury.currency = '₽'; S.treasury.setupPending = true;
   S.onboarded = true; S.created = td; S.firstDaySeen = false;
@@ -1639,7 +1572,6 @@ A.chestMove = (d) => {
   if (!c || !a) return toast('Сколько монет?');
   if (Number(d.v) < 0 && a > c.saved) return toast(`В сундуке только ${money(c.saved)}`);
   c.saved = c.saved + a * Number(d.v);
-  if (S.treasury.wallet !== null) S.treasury.wallet -= a * Number(d.v);
   save(); toast(Number(d.v) > 0 ? `В сундук «${c.name}» легло ${money(a)}` : `Из сундука взято ${money(a)}`);
   ui.chest = null; render();
 };
@@ -1860,7 +1792,6 @@ function boot() {
   const td = today();
   if (S.onboarded) {
     const gap = S.lastActive ? daysBetween(S.lastActive, td) : 0;
-    applyRegular();
     evaluateVisit(gap);
     S.lastActive = td;
     save();
@@ -1896,7 +1827,7 @@ function inAppHint() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && S.onboarded && S.lastActive !== today()) {
     const gap = daysBetween(S.lastActive, today());
-    applyRegular(); evaluateVisit(gap); S.lastActive = today(); save();
+    evaluateVisit(gap); S.lastActive = today(); save();
     if (route === 'map') render();
   }
 });
