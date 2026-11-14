@@ -877,8 +877,9 @@ SCR.treasury = () => {
   <div class="sheetup" style="background:var(--tre);padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px">
     <div class="row" style="justify-content:space-between"><h1 style="line-height:1">Сокровищница</h1>
       <span class="row" style="gap:8px"><button class="link" style="padding:4px 0;font-size:14px" data-a="hideSums">${hide ? 'Показать суммы' : 'Скрыть суммы'}</button>${helpBtn('treasury')}</span></div>
-    <p class="sub" style="margin-top:-6px">Сундуки — накопления на мечты${total && !hide ? ` · всего ${money(total)}` : ''}</p>
+    <p class="sub" style="margin-top:-6px">Сундуки — накопления на мечты</p>
     ${setup}
+    <div class="box row" style="justify-content:space-between;align-items:baseline;padding:12px 14px"><span style="font-size:15px;color:#D8C7AC">Всего в сундуках</span><span class="goth" style="font-size:30px;color:#E8C27A">${hide ? '•••' : money(total)}</span></div>
     ${hint('treasury')}
     <div class="col" style="gap:8px">
     <button data-a="toggle" data-k="chestHelp" aria-expanded="${!!ui.chestHelp}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#E8C27A;text-align:left;min-height:44px"><span style="font-size:16px">Как это работает</span><span style="font-size:13px;color:#C9B49A">${ui.chestHelp ? 'скрыть ▴' : 'что это? ▾'}</span></button>
