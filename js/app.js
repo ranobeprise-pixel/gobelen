@@ -575,10 +575,11 @@ function goalCard(l) {
       ${done ? '' : `<div class="row" style="gap:6px"><button class="btn ghost" style="min-height:44px;width:auto;padding:0 14px;color:#EFE7F7;border-color:#4E3D73" data-a="goalStep" data-v="-1" aria-label="Минус один">−1</button><button class="btn moon" style="min-height:44px;font-size:15px" data-a="goalStep" data-v="1">+1 — ещё на шаг ближе</button></div>`}`
     : done ? '' : `<button class="btn moon" style="min-height:42px;font-size:15px" data-a="goalDone">Цель достигнута</button>`}
     ${!done && left < 0 ? `<span style="font-size:14px;${muted}">Срок прошёл — это не провал. Можно продлить, изменить цель или отпустить её.</span>
-      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalExtend">+1 месяц</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalEdit">Изменить</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalDrop">Отпустить</button></div>`
+      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalExtend">+1 месяц</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalEdit">Изменить</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalDrop">Отпустить</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalRestart">Начать заново</button></div>`
     : done ? `<span style="font-size:14px;${muted}">Эта цель сохранена в «Прошлых целях» ниже.</span>
-      <button class="btn moon" style="min-height:46px;font-size:15px" data-a="goalEdit">Поставить новую цель</button>`
-    : `<div class="row" style="gap:12px"><button class="link" style="padding:0;font-size:13px;color:#B9AECB" data-a="goalEdit">Изменить</button><button class="link" style="padding:0;font-size:13px;color:#B9AECB" data-a="goalDrop">Отпустить</button></div>`}
+      <button class="btn moon" style="min-height:46px;font-size:15px" data-a="goalEdit">Поставить новую цель</button>
+      <div class="row" style="gap:14px;flex-wrap:wrap"><button class="link" style="padding:0;font-size:13px;color:#B9AECB;min-height:32px" data-a="goalRestart">Пройти ещё раз</button><button class="link" style="padding:0;font-size:13px;color:#B9AECB;min-height:32px" data-a="goalDel">Убрать с экрана</button></div>`
+    : `<div class="row" style="gap:14px;flex-wrap:wrap"><button class="link" style="padding:0;font-size:13px;color:#B9AECB;min-height:32px" data-a="goalEdit">Изменить</button><button class="link" style="padding:0;font-size:13px;color:#B9AECB;min-height:32px" data-a="goalRestart">Начать заново</button><button class="link" style="padding:0;font-size:13px;color:#B9AECB;min-height:32px" data-a="goalDrop">Отпустить</button><button class="link" style="padding:0;font-size:13px;color:#B9AECB;min-height:32px" data-a="goalDel">Удалить</button></div>`}
   </div>`;
 }
 
@@ -606,7 +607,7 @@ SCR.land = () => {
     ${goalCard(l)}
     ${(l.goalHistory || []).length ? `<div class="col" style="gap:4px">
       <button data-a="toggle" data-k="histOpen" aria-expanded="${!!ui.histOpen}" class="row" style="justify-content:space-between;background:none;border:none;padding:0;color:#D9D0E8;text-align:left;min-height:44px"><span style="font-size:15px">Прошлые цели · достигнуто ${l.goalHistory.filter((x) => x.status === 'done').length} из ${l.goalHistory.length}</span><span style="font-size:13px">${ui.histOpen ? '▴' : '▾'}</span></button>
-      ${ui.histOpen ? [...l.goalHistory].reverse().map((x) => `<div class="row" style="align-items:flex-start;font-size:14px;line-height:1.35;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05)"><span style="color:${x.status === 'done' ? 'var(--moon)' : '#B9AECB'}">${x.status === 'done' ? '✓' : '○'}</span><span class="col grow" style="gap:0"><span>${esc(x.text)}</span><span style="font-size:12px;color:#B9AECB">${x.status === 'done' ? 'достигнута' : 'отпущена'} ${fmtDay(x.closedAt)}${x.target ? ` · ${x.current} из ${x.target} ${esc(x.unit || '')}` : ''}</span></span></div>`).join('') : ''}
+      ${ui.histOpen ? [...l.goalHistory].reverse().map((x) => `<div class="row" style="align-items:flex-start;font-size:14px;line-height:1.35;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05)"><span style="color:${x.status === 'done' ? 'var(--moon)' : '#B9AECB'}">${x.status === 'done' ? '✓' : '○'}</span><span class="col grow" style="gap:0"><span>${esc(x.text)}</span><span style="font-size:12px;color:#B9AECB">${x.status === 'done' ? 'достигнута' : 'отпущена'} ${fmtDay(x.closedAt)}${x.target ? ` · ${x.current} из ${x.target} ${esc(x.unit || '')}` : ''}</span></span><button data-a="goalHistDel" data-i="${l.goalHistory.indexOf(x)}" aria-label="Удалить из истории" style="width:36px;height:36px;margin:-6px -6px 0 0;border:none;background:none;color:#B9AECB">${I.x}</button></div>`).join('') : ''}
     </div>` : ''}
     <div class="col" style="gap:4px"><div class="prog" role="img" aria-label="Вышито ${pct} процентов" style="background:rgba(255,255,255,.08)"><div style="width:${pct}%"></div></div>
     <span style="font-size:13px;color:#B9AECB">Земля проступает: ${stitchW(l.stitches)} из ${l.target}${(() => { const wk = weeklyLoad(l.patterns); const left = l.target - l.stitches; if (!wk || left <= 0) return ''; const n = Math.max(1, Math.round(left / wk)); return ` — по плану узоров ещё примерно ${n} ${plural(n, 'неделя', 'недели', 'недель')}`; })()}</span></div>
@@ -1455,6 +1456,14 @@ A.goalStep = (d) => {
   save(); flash('goal');
 };
 A.goalDone = () => { goalReached(curLand()); save(); flash('goal'); };
+A.goalRestart = () => withUndo('Цель начата заново', () => {
+  const l = curLand(); const g0 = l.goal;
+  const months = Math.max(1, Math.round(daysBetween(g0.since || today(), g0.due) / 30)) || 3;
+  const due = parseDay(today()); due.setMonth(due.getMonth() + months);
+  l.goal = { ...g0, current: 0, since: today(), due: dayKey(due), doneAt: null };
+});
+A.goalDel = () => withUndo(curLand().goal.doneAt ? 'Убрано с экрана, в «Прошлых целях» осталось' : 'Цель удалена', () => { curLand().goal = null; });
+A.goalHistDel = (d) => withUndo('Удалено из истории', () => { curLand().goalHistory.splice(Number(d.i), 1); });
 A.goalExtend = () => { const g0 = curLand().goal; const d = parseDay(today()); d.setMonth(d.getMonth() + 1); g0.due = dayKey(d); save(); toast('Срок продлён на месяц'); render(); };
 A.goalEdit = () => { const g0 = curLand().goal; Object.assign(ui, { goalForm: true, gText: g0.doneAt ? '' : g0.text, gTarget: g0.doneAt ? '' : (g0.target || ''), gUnit: g0.doneAt ? '' : g0.unit, gWhy: g0.doneAt ? '' : g0.why, gMonths: 3 }); render(); };
 A.goalDrop = () => withUndo('Цель отпущена. Это тоже решение', () => { const l = curLand(); if (!l.goal.doneAt) archiveGoal(l, 'dropped'); S.journal.push({ id: uid(), kind: 'land', date: today(), text: `${landName(l)}: цель отпущена — ${l.goal.text}` }); l.goal = null; });
