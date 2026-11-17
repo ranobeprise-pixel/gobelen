@@ -1800,6 +1800,15 @@ function boot() {
   } else go('start');
   if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
   inAppHint();
+  countOpen();
+}
+// счётчик открытий (GoatCounter): только факт открытия и откуда пришли — без записей и личных данных
+const GC_CODE = '';
+function countOpen() {
+  if (!GC_CODE || /localhost|127\.0\.0\.1/.test(location.hostname)) return;
+  const standalone = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  const q = new URLSearchParams({ p: standalone ? '/s-ekrana-domoy' : '/v-brauzere', t: standalone ? 'С экрана «Домой»' : 'В браузере', r: document.referrer || '', s: String(screen.width), rnd: String(Math.random()).slice(2) });
+  try { const i = new Image(); i.src = `https://${GC_CODE}.goatcounter.com/count?${q}`; } catch (e) { /* без сети — не считаем */ }
 }
 // открыли по ссылке внутри Инстаграма, VK, Telegram и т. п.: там нельзя добавить на экран «Домой» — подсказываем открыть в браузере
 function inAppHint() {
