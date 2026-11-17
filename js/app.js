@@ -576,7 +576,9 @@ function goalCard(l) {
     : done ? '' : `<button class="btn moon" style="min-height:42px;font-size:15px" data-a="goalDone">Цель достигнута</button>`}
     ${!done && left < 0 ? `<span style="font-size:14px;${muted}">Срок прошёл — это не провал. Можно продлить, изменить цель или отпустить её.</span>
       <div class="row" style="gap:6px;flex-wrap:wrap"><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalExtend">+1 месяц</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalEdit">Изменить</button><button class="chip" style="color:#EFE7F7;border-color:#4E3D73" data-a="goalDrop">Отпустить</button></div>`
-    : `<div class="row" style="gap:12px"><button class="link" style="padding:0;font-size:13px;color:#B9AECB" data-a="goalEdit">${done ? 'Новая цель' : 'Изменить'}</button>${done ? '' : `<button class="link" style="padding:0;font-size:13px;color:#B9AECB" data-a="goalDrop">Отпустить</button>`}</div>`}
+    : done ? `<span style="font-size:14px;${muted}">Эта цель сохранена в «Прошлых целях» ниже.</span>
+      <button class="btn moon" style="min-height:46px;font-size:15px" data-a="goalEdit">Поставить новую цель</button>`
+    : `<div class="row" style="gap:12px"><button class="link" style="padding:0;font-size:13px;color:#B9AECB" data-a="goalEdit">Изменить</button><button class="link" style="padding:0;font-size:13px;color:#B9AECB" data-a="goalDrop">Отпустить</button></div>`}
   </div>`;
 }
 
